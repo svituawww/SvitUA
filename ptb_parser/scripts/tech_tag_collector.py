@@ -31,10 +31,10 @@ class TechHTMLCollector:
             "output_database_tech_elements": "json/tech_tag_html_elements.json",
             "output_database_byte": "json/all_openclose_bytes.json",
             "output_database_comment_validation": "json/comment_validation.json",
-            "enable_symbol_collection": True,
+            "enable_bracket_collection": True,
             "enable_tech_html_collection": True,
             "enable_comment_validation": True,
-            "context_length_before_after_symbol": 5,
+            "context_length_before_after_bracket": 5,
             "tech_html_settings": {
                 "include_body_content": True,
                 "include_name_extraction": True,

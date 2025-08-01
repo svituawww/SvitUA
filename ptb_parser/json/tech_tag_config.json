@@ -3,17 +3,17 @@
   "output_database_tech_elements": "json/tech_tag_html_elements.json",
   "output_database_byte": "json/all_openclose_bytes.json",
   "output_database_unified_validation": "json/unified_validation.json",
-  "enable_symbol_collection": true,
+  "enable_bracket_collection": true,
   "enable_tech_html_collection": true,
   "enable_unified_validation": true,
-  "context_length_before_after_symbol": 5,
+  "context_length_before_after_bracket": 5,
   "unified_validation": {
     "enabled": true,
     "output_file": "json/unified_validation.json",
     "include_cross_validation": true,
     "validation_types": [
       "comment_validation",
-      "symbol_validation", 
+      "bracket_validation", 
       "element_sequence_validation"
     ]
   },

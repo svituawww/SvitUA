@@ -82,7 +82,7 @@ ptb_parser/json/
 ├── tech_tag_config.json              # Consolidated configuration
 ├── unified_validation.json           # All validation results
 ├── tech_tag_html_elements.json      # HTML elements data
-└── all_openclose_bytes.json         # Symbol collection data
+└── all_openclose_bytes.json         # Bracket collection data
 ```
 
 ## Validation Data Structure

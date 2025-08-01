@@ -146,13 +146,13 @@ Develop a comprehensive JSON configuration system for the ptb_parser project tha
 <!-- PRESERVE improve only this part of instruction. use no more then 50 strings for this part. -->
 <!-- PRESERVE begin id_part8 -->
 
-# Byte-Level Tag Symbol Collection (id_part8) ✅ IMPLEMENTED
+# Byte-Level Tag Bracket Collection (id_part8) ✅ IMPLEMENTED
 
 ## Overview
 Scan each input file byte-by-byte to collect all `<` and `>` symbols with their exact positions.
 
 ## Implementation Status
-- ✅ **Symbol Collection Algorithm**: Fully implemented in `tech_tag_collector.py`
+- ✅ **Bracket Collection Algorithm**: Fully implemented in `tech_tag_collector.py`
 - ✅ **Position Tracking**: 0-based indexing with exact byte positions
 - ✅ **Output Database**: `json/all_openclose_bytes.json` generated successfully
 - ✅ **Statistics**: Opening/closing symbol counts with validation
@@ -228,7 +228,7 @@ def scan_bytes_for_symbols(self, file_path: str) -> List[Dict[str, Any]]:
 
 ## Processing Logic
 
-### **Symbol Collection Rules:**
+### **Bracket Collection Rules:**
 - **Scan every byte** in input files
 - **Collect only `<` and `>` symbols**
 - **Track exact position** in file (0-based indexing)
@@ -277,7 +277,7 @@ def process_all_files_for_symbols(self):
 - **Tag boundary analysis**
 - **HTML structure validation**
 - **Position verification**
-- **Symbol counting statistics**
+- **Bracket counting statistics**
 
 ## Performance Considerations
 
@@ -305,7 +305,7 @@ def process_all_files_for_symbols(self):
 <!-- PRESERVE improve only this part of instruction. use no more then 50 strings for this part. -->
 <!-- PRESERVE begin id_part9 -->
 
-# Symbol Consistency Validation (id_part9) ✅ IMPLEMENTED
+# Bracket Consistency Validation (id_part9) ✅ IMPLEMENTED
 
 ## Overview
 Validate that opening symbols (`<`) are properly followed by closing symbols (`>`) in the correct sequence and pairing using stack-based validation.
@@ -313,7 +313,7 @@ Validate that opening symbols (`<`) are properly followed by closing symbols (`>
 ## Implementation Status
 - ✅ **Stack-based Validation**: Fully implemented with LIFO approach
 - ✅ **Consistency Scoring**: 0.0 to 1.0 scale working correctly
-- ✅ **Orphaned Symbol Detection**: Identifies unpaired symbols
+- ✅ **Orphaned Bracket Detection**: Identifies unpaired brackets
 - ✅ **Validation Status**: PASSED/FAILED determination
 - ✅ **Error Reporting**: Detailed orphaned symbol lists
 
@@ -601,8 +601,8 @@ Loop through each element in "output_database_byte": "json/all_openclose_bytes.j
 
 ## Implementation Status Summary
 - ✅ **Core Tag Collection**: Fully implemented and functional
-- ✅ **Symbol Collection (id_part8)**: Byte-level symbol tracking implemented
-- ✅ **Symbol Validation (id_part9)**: Stack-based validation working
+- ✅ **Bracket Collection (id_part8)**: Byte-level bracket tracking implemented
+- ✅ **Bracket Validation (id_part9)**: Stack-based validation working
 - ✅ **TECH_HTML Elements (id_part11)**: Custom terminology and element creation implemented
 - ✅ **Loop Processing**: Content reconstruction and output generation functional
 - ✅ **Error Handling**: Robust error management throughout
@@ -705,8 +705,8 @@ def run(self)
   - Batch file processing
   - Results saving
   - Summary reporting
-  - Symbol collection (id_part8)
-  - Symbol validation (id_part9)
+  - Bracket collection (id_part8)
+- Bracket validation (id_part9)
   - TECH_HTML element collection (id_part11)
 - **Output**: Comprehensive collection summary
 
@@ -907,8 +907,8 @@ def run_tech_html_collection(self)
 ✅ **Validation system**: Structure and content validation  
 ✅ **Error handling**: Graceful failure with clear messages  
 ✅ **Extensible design**: Custom processing hooks available  
-✅ **Symbol collection**: Byte-level `<` and `>` symbol tracking  
-✅ **Symbol validation**: Stack-based consistency validation  
+✅ **Bracket collection**: Byte-level `<` and `>` bracket tracking
+✅ **Bracket validation**: Stack-based consistency validation  
 ✅ **TECH_HTML elements**: Custom terminology and element creation  
 
 ## TECH_HTML Methods Summary
@@ -931,12 +931,12 @@ def run_tech_html_collection(self)
 
 ### **✅ Successfully Implemented Features:**
 
-1. **Symbol Collection (id_part8)**: 
+1. **Bracket Collection (id_part8)**: 
    - 438 symbols collected from test file
    - 220 opening symbols, 219 closing symbols
    - 0-based position tracking working correctly
 
-2. **Symbol Validation (id_part9)**:
+2. **Bracket Validation (id_part9)**:
    - 1.0 consistency score achieved
    - 442 valid pairs detected
    - 0 orphaned symbols found
@@ -1026,7 +1026,7 @@ Extract all TECH_HTML-related methods from `ptb_parser/scripts/tag_collector.py`
 7. `run_tech_html_collection()` - Main orchestration ✅
 
 ### **Supporting Methods**:
-1. `scan_bytes_for_symbols()` - Symbol scanning (required dependency) ✅
+1. `scan_bytes_for_brackets()` - Bracket scanning (required dependency) ✅
 2. `load_config()` - Configuration loading (modified for tech config) ✅
 3. `get_default_config()` - Default settings (TECH_HTML focused) ✅
 
@@ -1083,7 +1083,7 @@ Extract all TECH_HTML-related methods from `ptb_parser/scripts/tag_collector.py`
 - Position tracking and body content extraction ✅
 
 ### **Secondary Output**: `json/all_openclose_bytes.json` ✅
-- Symbol collection for TECH_HTML processing ✅
+- Bracket collection for TECH_HTML processing ✅
 - Required dependency for element creation ✅
 
 ## Success Metrics
@@ -1304,7 +1304,7 @@ Loop through each element in "output_database_byte": "json/all_openclose_bytes.j
 }
 ```
 
-### **Symbol Position Analysis:**
+### **Bracket Position Analysis:**
 
 #### **String Indexing (0-based):**
 ```
@@ -1315,9 +1315,9 @@ Index:   012345678901234
          0             14
 ```
 
-#### **Symbol Positions:**
-- **Opening Symbol `<`**: Position **0** (`pos_open_ttag`)
-- **Closing Symbol `>`**: Position **14** (`pos_close_ttag`)
+#### **Bracket Positions:**
+- **Opening Bracket `<`**: Position **0** (`pos_open_ttag`)
+- **Closing Bracket `>`**: Position **14** (`pos_close_ttag`)
 
 #### **Content Extraction:**
 ```python
@@ -1367,7 +1367,7 @@ content_test3 += content_input[last_split_pos:pos_open_ttag] + "\n"   # 0:0 = "\
 
 1. **0-based indexing**: All positions start from 0
 2. **Inclusive start, exclusive end**: `content[0:14]` includes position 0 but excludes position 14
-3. **Symbol positions**: `<` at 0, `>` at 14
+3. **Bracket positions**: `<` at 0, `>` at 14
 4. **Body extraction**: `content[1:14]` = `"!DOCTYPE html"` (without symbols)
 5. **Complete element**: `content[0:14]` = `"<!DOCTYPE html>"` (with symbols)
 
@@ -1397,7 +1397,7 @@ content_test3 += content_input[last_split_pos:pos_open_ttag] + "\n"   # 0:0 = "\
 }
 ```
 
-### **Symbol Position Analysis:**
+### **Bracket Position Analysis:**
 
 #### **String Indexing (0-based):**
 ```
@@ -1408,9 +1408,9 @@ Index:   0123456789012345
          16             31
 ```
 
-#### **Symbol Positions:**
-- **Opening Symbol `<`**: Position **16** (`pos_open_ttag`)
-- **Closing Symbol `>`**: Position **31** (`pos_close_ttag`)
+#### **Bracket Positions:**
+- **Opening Bracket `<`**: Position **16** (`pos_open_ttag`)
+- **Closing Bracket `>`**: Position **31** (`pos_close_ttag`)
 
 #### **Content Extraction:**
 ```python
@@ -1460,7 +1460,7 @@ content_test3 += content_input[last_split_pos:pos_open_ttag] + "\n"   # 14:16 = 
 
 1. **0-based indexing**: All positions start from 0
 2. **Inclusive start, exclusive end**: `content[16:31]` includes position 16 but excludes position 31
-3. **Symbol positions**: `<` at 16, `>` at 31
+3. **Bracket positions**: `<` at 16, `>` at 31
 4. **Body extraction**: `content[17:31]` = `"html lang=\"uk\""` (without symbols)
 5. **Complete element**: `content[16:31]` = `"<html lang=\"uk\">"` (with symbols)
 

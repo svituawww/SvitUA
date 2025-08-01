@@ -66,10 +66,10 @@ class TechHTMLCollector:
             }
         }
     
-    def scan_bytes_for_symbols(self, file_path: str) -> List[Dict[str, Any]]:
-        """Scan file byte-by-byte for < and > symbols."""
-        symbols = []
-        symbol_counter = 1
+    def scan_bytes_for_brackets(self, file_path: str) -> List[Dict[str, Any]]:
+        """Scan file byte-by-byte for < and > brackets."""
+        brackets = []
+        bracket_counter = 1
         
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
@@ -77,28 +77,28 @@ class TechHTMLCollector:
                 
             for pos, char in enumerate(content):
                 if char in ['<', '>']:
-                    symbol_data = {
-                        "id": symbol_counter,
-                        "order": symbol_counter,
-                        "symbol": char,
+                    bracket_data = {
+                        "id": bracket_counter,
+                        "order": bracket_counter,
+                        "bracket": char,
                         "pos_in_file": pos
                     }
-                    symbols.append(symbol_data)
-                    symbol_counter += 1
+                    brackets.append(bracket_data)
+                    bracket_counter += 1
             
-            return symbols
+            return brackets
         except Exception as e:
-            print(f"❌ Error scanning symbols in {file_path}: {e}")
+            print(f"❌ Error scanning brackets in {file_path}: {e}")
             return []
     
-    def enhance_symbols_with_context(self, symbols: List[Dict[str, Any]], content: str) -> List[Dict[str, Any]]:
-        """Enhance symbols with context data (chars_before, chars_after, full_context) and comment detection."""
-        context_length = self.config.get("context_length_before_after_symbol", 5)
-        enhanced_symbols = []
+    def enhance_brackets_with_context(self, brackets: List[Dict[str, Any]], content: str) -> List[Dict[str, Any]]:
+        """Enhance brackets with context data (chars_before, chars_after, full_context) and comment detection."""
+        context_length = self.config.get("context_length_before_after_bracket", 5)
+        enhanced_brackets = []
         
-        for symbol in symbols:
-            pos = symbol["pos_in_file"]
-            symbol_char = symbol["symbol"]
+        for bracket in brackets:
+            pos = bracket["pos_in_file"]
+            bracket_char = bracket["bracket"]
             
             # Calculate context boundaries
             start_before = pos - context_length
@@ -121,16 +121,16 @@ class TechHTMLCollector:
                 chars_after = content[start_after:end_after]
             
             # Create full context
-            full_context = chars_before + symbol_char + chars_after
+            full_context = chars_before + bracket_char + chars_after
             
             # Detect comment type based on context
-            type_tech_tag = self.detect_comment_type(symbol_char, chars_before, chars_after)
+            type_tech_tag = self.detect_comment_type(bracket_char, chars_before, chars_after)
             
-            # Create enhanced symbol data
-            enhanced_symbol = {
-                "id": symbol["id"],
-                "order": symbol["order"],
-                "symbol": symbol_char,
+            # Create enhanced bracket data
+            enhanced_bracket = {
+                "id": bracket["id"],
+                "order": bracket["order"],
+                "bracket": bracket_char,
                 "pos_in_file": pos,
                 "chars_5_before": chars_before,
                 "chars_5_after": chars_after,
@@ -138,59 +138,59 @@ class TechHTMLCollector:
                 "full_context": full_context
             }
             
-            enhanced_symbols.append(enhanced_symbol)
+            enhanced_brackets.append(enhanced_bracket)
         
         # Mark inner comment content after initial comment detection
-        enhanced_symbols = self.mark_inner_comment_content(enhanced_symbols)
+        enhanced_brackets = self.mark_inner_comment_content(enhanced_brackets)
         
-        return enhanced_symbols
+        return enhanced_brackets
     
-    def detect_comment_type(self, symbol: str, chars_before: str, chars_after: str) -> str:
-        """Detect if symbol is part of a comment opening, closing, or regular tag."""
-        # Check for opening comment: symbol == "<" AND chars_5_after[0:3] == "!--"
-        if symbol == "<" and len(chars_after) >= 3 and chars_after[0:3] == "!--":
+    def detect_comment_type(self, bracket: str, chars_before: str, chars_after: str) -> str:
+        """Detect if bracket is part of a comment opening, closing, or regular tag."""
+        # Check for opening comment: bracket == "<" AND chars_5_after[0:3] == "!--"
+        if bracket == "<" and len(chars_after) >= 3 and chars_after[0:3] == "!--":
             return "comm_open"
         
-        # Check for closing comment: symbol == ">" AND chars_5_before[-2:] == "--"
-        if symbol == ">" and len(chars_before) >= 2 and chars_before[-2:] == "--":
+        # Check for closing comment: bracket == ">" AND chars_5_before[-2:] == "--"
+        if bracket == ">" and len(chars_before) >= 2 and chars_before[-2:] == "--":
             return "comm_close"
         
         # Regular tag
         return "regular"
     
-    def mark_inner_comment_content(self, symbols_with_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """Mark symbols between comment opening and closing as inner comment content."""
-        enhanced_symbols = symbols_with_data.copy()
+    def mark_inner_comment_content(self, brackets_with_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Mark brackets between comment opening and closing as inner comment content."""
+        enhanced_brackets = brackets_with_data.copy()
         comment_stack = []
         
-        for i, symbol in enumerate(enhanced_symbols):
-            if symbol["type_tech_tag"] == "comm_open":
+        for i, bracket in enumerate(enhanced_brackets):
+            if bracket["type_tech_tag"] == "comm_open":
                 # Push comment opening to stack
                 comment_stack.append({
-                    "id": symbol["id"],
-                    "pos": symbol["pos_in_file"],
+                    "id": bracket["id"],
+                    "pos": bracket["pos_in_file"],
                     "index": i
                 })
-            elif symbol["type_tech_tag"] == "comm_close":
+            elif bracket["type_tech_tag"] == "comm_close":
                 if comment_stack:
-                    # Found matching comment closing - mark all symbols in between
+                    # Found matching comment closing - mark all brackets in between
                     opening = comment_stack.pop()
                     start_index = opening["index"] + 1
                     end_index = i
                     
-                    # Mark all symbols between opening and closing as inner_comm_content
+                    # Mark all brackets between opening and closing as inner_comm_content
                     for j in range(start_index, end_index):
-                        if enhanced_symbols[j]["type_tech_tag"] == "regular":
-                            enhanced_symbols[j]["type_tech_tag"] = "inner_comm_content"
+                        if enhanced_brackets[j]["type_tech_tag"] == "regular":
+                            enhanced_brackets[j]["type_tech_tag"] = "inner_comm_content"
         
-        return enhanced_symbols
+        return enhanced_brackets
     
-    def validate_comment_consistency(self, symbols_with_data: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def validate_comment_consistency(self, brackets_with_data: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Validate comment type consistency and pairing using stack-based approach."""
         validation_results = {
-            "total_comment_symbols": 0,
-            "comment_opening_symbols": 0,
-            "comment_closing_symbols": 0,
+            "total_comment_brackets": 0,
+            "comment_opening_brackets": 0,
+            "comment_closing_brackets": 0,
             "valid_comment_pairs": 0,
             "orphaned_comment_openings": [],
             "orphaned_comment_closings": [],
@@ -200,35 +200,35 @@ class TechHTMLCollector:
         
         comment_opening_stack = []
         
-        for i, symbol in enumerate(symbols_with_data):
-            if symbol["type_tech_tag"] == "comm_open":
-                validation_results["comment_opening_symbols"] += 1
-                validation_results["total_comment_symbols"] += 1
+        for i, bracket in enumerate(brackets_with_data):
+            if bracket["type_tech_tag"] == "comm_open":
+                validation_results["comment_opening_brackets"] += 1
+                validation_results["total_comment_brackets"] += 1
                 comment_opening_stack.append({
-                    "id": symbol["id"],
-                    "pos": symbol["pos_in_file"],
+                    "id": bracket["id"],
+                    "pos": bracket["pos_in_file"],
                     "index": i
                 })
-            elif symbol["type_tech_tag"] == "comm_close":
-                validation_results["comment_closing_symbols"] += 1
-                validation_results["total_comment_symbols"] += 1
+            elif bracket["type_tech_tag"] == "comm_close":
+                validation_results["comment_closing_brackets"] += 1
+                validation_results["total_comment_brackets"] += 1
                 
                 if comment_opening_stack:
-                    # Valid comment pair found - pop the matching opening symbol
+                    # Valid comment pair found - pop the matching opening bracket
                     opening = comment_opening_stack.pop()
                     validation_results["valid_comment_pairs"] += 1
                 else:
-                    # Orphaned comment closing symbol
-                    validation_results["orphaned_comment_closings"].append(symbol["id"])
+                    # Orphaned comment closing bracket
+                    validation_results["orphaned_comment_closings"].append(bracket["id"])
         
-        # Check for orphaned comment opening symbols
+        # Check for orphaned comment opening brackets
         for opening in comment_opening_stack:
             validation_results["orphaned_comment_openings"].append(opening["id"])
         
         # Calculate comment consistency score (0.0 to 1.0)
-        total_comment_symbols = validation_results["comment_opening_symbols"] + validation_results["comment_closing_symbols"]
-        if total_comment_symbols > 0:
-            validation_results["comment_consistency_score"] = (validation_results["valid_comment_pairs"] * 2) / total_comment_symbols
+        total_comment_brackets = validation_results["comment_opening_brackets"] + validation_results["comment_closing_brackets"]
+        if total_comment_brackets > 0:
+            validation_results["comment_consistency_score"] = (validation_results["valid_comment_pairs"] * 2) / total_comment_brackets
         
         # Determine comment validation status
         if (len(validation_results["orphaned_comment_openings"]) == 0 and 
@@ -240,56 +240,56 @@ class TechHTMLCollector:
         
         return validation_results
     
-    def validate_symbol_consistency(self, symbols: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """Validate symbol consistency and pairing using stack-based approach."""
+    def validate_bracket_consistency(self, brackets: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Validate bracket consistency and pairing using stack-based approach."""
         validation_results = {
-            "total_symbols": len(symbols),
-            "opening_symbols": 0,
-            "closing_symbols": 0,
+            "total_brackets": len(brackets),
+            "opening_brackets": 0,
+            "closing_brackets": 0,
             "valid_pairs": 0,
             "orphaned_openings": [],
             "orphaned_closings": [],
-            "symbol_consistency_score": 0.0,
-            "symbol_validation_status": "PASSED"
+            "bracket_consistency_score": 0.0,
+            "bracket_validation_status": "PASSED"
         }
         
         opening_stack = []
         
-        for i, symbol in enumerate(symbols):
-            if symbol["symbol"] == "<":
-                validation_results["opening_symbols"] += 1
+        for i, bracket in enumerate(brackets):
+            if bracket["bracket"] == "<":
+                validation_results["opening_brackets"] += 1
                 opening_stack.append({
-                    "id": symbol["id"],
-                    "pos": symbol["pos_in_file"],
+                    "id": bracket["id"],
+                    "pos": bracket["pos_in_file"],
                     "index": i
                 })
-            elif symbol["symbol"] == ">":
-                validation_results["closing_symbols"] += 1
+            elif bracket["bracket"] == ">":
+                validation_results["closing_brackets"] += 1
                 
                 if opening_stack:
-                    # Valid pair found - pop the matching opening symbol
+                    # Valid pair found - pop the matching opening bracket
                     opening = opening_stack.pop()
                     validation_results["valid_pairs"] += 1
                 else:
-                    # Orphaned closing symbol
-                    validation_results["orphaned_closings"].append(symbol["id"])
+                    # Orphaned closing bracket
+                    validation_results["orphaned_closings"].append(bracket["id"])
         
-        # Check for orphaned opening symbols
+        # Check for orphaned opening brackets
         for opening in opening_stack:
             validation_results["orphaned_openings"].append(opening["id"])
         
-        # Calculate symbol consistency score (0.0 to 1.0)
-        total_symbols = validation_results["opening_symbols"] + validation_results["closing_symbols"]
-        if total_symbols > 0:
-            validation_results["symbol_consistency_score"] = (validation_results["valid_pairs"] * 2) / total_symbols
+        # Calculate bracket consistency score (0.0 to 1.0)
+        total_brackets = validation_results["opening_brackets"] + validation_results["closing_brackets"]
+        if total_brackets > 0:
+            validation_results["bracket_consistency_score"] = (validation_results["valid_pairs"] * 2) / total_brackets
         
-        # Determine symbol validation status
+        # Determine bracket validation status
         if (len(validation_results["orphaned_openings"]) == 0 and 
             len(validation_results["orphaned_closings"]) == 0 and
-            validation_results["symbol_consistency_score"] == 1.0):
-            validation_results["symbol_validation_status"] = "PASSED"
+            validation_results["bracket_consistency_score"] == 1.0):
+            validation_results["bracket_validation_status"] = "PASSED"
         else:
-            validation_results["symbol_validation_status"] = "FAILED"
+            validation_results["bracket_validation_status"] = "FAILED"
         
         return validation_results
     
@@ -342,50 +342,50 @@ class TechHTMLCollector:
         """Perform cross-validation analysis between different validation types."""
         
         comment_val = validation_details["comment_validation"]
-        symbol_val = validation_details["symbol_validation"]
+        bracket_val = validation_details["bracket_validation"]
         element_val = validation_details["element_sequence_validation"]
         
-        # Calculate symbol-comment correlation
-        comment_symbols = comment_val.get("total_comment_symbols", 0)
-        total_symbols = symbol_val.get("total_symbols", 0)
-        symbol_comment_correlation = comment_symbols / total_symbols if total_symbols > 0 else 0.0
+        # Calculate bracket-comment correlation
+        comment_brackets = comment_val.get("total_comment_brackets", 0)
+        total_brackets = bracket_val.get("total_brackets", 0)
+        bracket_comment_correlation = comment_brackets / total_brackets if total_brackets > 0 else 0.0
         
-        # Calculate element-symbol alignment
+        # Calculate element-bracket alignment
         element_count = element_val.get("total_elements", 0)
-        symbol_pairs = symbol_val.get("valid_pairs", 0)
-        element_symbol_alignment = symbol_pairs / element_count if element_count > 0 else 0.0
+        bracket_pairs = bracket_val.get("valid_pairs", 0)
+        element_bracket_alignment = bracket_pairs / element_count if element_count > 0 else 0.0
         
         # Calculate overall structure integrity
         structure_scores = [
             comment_val.get("comment_consistency_score", 0.0),
-            symbol_val.get("symbol_consistency_score", 0.0),
+            bracket_val.get("bracket_consistency_score", 0.0),
             element_val.get("sequence_consistency_score", 0.0)
         ]
         overall_structure_integrity = sum(structure_scores) / len(structure_scores)
         
         return {
-            "symbol_comment_correlation": symbol_comment_correlation,
-            "element_symbol_alignment": element_symbol_alignment,
+            "bracket_comment_correlation": bracket_comment_correlation,
+            "element_bracket_alignment": element_bracket_alignment,
             "overall_structure_integrity": overall_structure_integrity
         }
     
     def create_unified_validation_report(self, 
                                        comment_validation: Dict[str, Any],
-                                       symbol_validation: Dict[str, Any], 
+                                       bracket_validation: Dict[str, Any], 
                                        element_sequence_validation: Dict[str, Any]) -> Dict[str, Any]:
         """Create unified validation report combining all validation types."""
         
         # Collect all validation results
         validation_details = {
             "comment_validation": comment_validation,
-            "symbol_validation": symbol_validation,
+            "bracket_validation": bracket_validation,
             "element_sequence_validation": element_sequence_validation
         }
         
         # Calculate overall validation status
         validation_statuses = [
             comment_validation.get("comment_validation_status", "UNKNOWN"),
-            symbol_validation.get("symbol_validation_status", "UNKNOWN"),
+            bracket_validation.get("bracket_validation_status", "UNKNOWN"),
             element_sequence_validation.get("sequence_validation_status", "UNKNOWN")
         ]
         
@@ -394,7 +394,7 @@ class TechHTMLCollector:
         # Calculate overall validation score
         scores = [
             comment_validation.get("comment_consistency_score", 0.0),
-            symbol_validation.get("symbol_consistency_score", 0.0),
+            bracket_validation.get("bracket_consistency_score", 0.0),
             element_sequence_validation.get("sequence_consistency_score", 0.0)
         ]
         overall_score = sum(scores) / len(scores) if scores else 0.0
@@ -431,30 +431,30 @@ class TechHTMLCollector:
     def run_comprehensive_validation(self, file_path: str) -> Dict[str, Any]:
         """Run all validation types and create unified report."""
         
-        # Get symbols and enhanced symbols
-        symbols = self.scan_bytes_for_symbols(file_path)
+        # Get brackets and enhanced brackets
+        brackets = self.scan_bytes_for_brackets(file_path)
         
         # Read file content for context
         with open(file_path, 'r', encoding='utf-8') as f:
             content = f.read()
         
-        # Enhance symbols with context and comment detection
-        symbols_with_data = self.enhance_symbols_with_context(symbols, content)
+        # Enhance brackets with context and comment detection
+        brackets_with_data = self.enhance_brackets_with_context(brackets, content)
         
         # Mark inner comment content
-        symbols_with_data = self.mark_inner_comment_content(symbols_with_data)
+        brackets_with_data = self.mark_inner_comment_content(brackets_with_data)
         
         # Create tech HTML elements
-        list_tech_tech = self.create_tech_tag_html_elements_comms(symbols_with_data, content)
+        list_tech_tech = self.create_tech_tag_html_elements_comms(brackets_with_data, content)
         
         # Run individual validations
-        comment_validation = self.validate_comment_consistency(symbols_with_data)
-        symbol_validation = self.validate_symbol_consistency(symbols)
+        comment_validation = self.validate_comment_consistency(brackets_with_data)
+        bracket_validation = self.validate_bracket_consistency(brackets)
         element_sequence_validation = self.validate_element_sequence(list_tech_tech)
         
         # Create unified report
         unified_report = self.create_unified_validation_report(
-            comment_validation, symbol_validation, element_sequence_validation
+            comment_validation, bracket_validation, element_sequence_validation
         )
         
         # Save unified validation report
@@ -502,8 +502,8 @@ class TechHTMLCollector:
                 cross_analysis = unified_report.get("cross_validation_analysis", {})
                 if cross_analysis:
                     print(f"   🔗 Cross-Validation Analysis:")
-                    print(f"      Symbol-Comment Correlation: {cross_analysis.get('symbol_comment_correlation', 0.0):.2f}")
-                    print(f"      Element-Symbol Alignment: {cross_analysis.get('element_symbol_alignment', 0.0):.2f}")
+                    print(f"      Bracket-Comment Correlation: {cross_analysis.get('bracket_comment_correlation', 0.0):.2f}")
+                    print(f"      Element-Bracket Alignment: {cross_analysis.get('element_bracket_alignment', 0.0):.2f}")
                     print(f"      Overall Structure Integrity: {cross_analysis.get('overall_structure_integrity', 0.0):.2f}")
                 
             except Exception as e:
@@ -524,11 +524,11 @@ class TechHTMLCollector:
         print("✅ Unified validation completed successfully!")
     
     def extract_body_tech_tag_html(self, content: str, pos_open: int, pos_close: int) -> str:
-        """Extract body_tech_tag_html content between opening and closing symbols."""
+        """Extract body_tech_tag_html content between opening and closing brackets."""
         if pos_open >= pos_close or pos_open < 0 or pos_close > len(content):
             return ""
         
-        # Extract content between symbols (excluding the symbols themselves)
+        # Extract content between brackets (excluding the brackets themselves)
         body_content = content[pos_open + 1:pos_close]
         return body_content
     
@@ -584,23 +584,23 @@ class TechHTMLCollector:
         # If not standard, it's custom
         return "custom"
     
-    def create_tech_tag_html_elements(self, symbols: List[Dict[str, Any]], content: str) -> List[Dict[str, Any]]:
-        """Create tech_tag_html elements from symbols using TECH_HTML terminology."""
+    def create_tech_tag_html_elements(self, brackets: List[Dict[str, Any]], content: str) -> List[Dict[str, Any]]:
+        """Create tech_tag_html elements from brackets using TECH_HTML terminology."""
         tech_elements = []
         element_counter = 1
         
-        # Group symbols into pairs (opening + closing)
+        # Group brackets into pairs (opening + closing)
         i = 0
-        while i < len(symbols) - 1:
-            current_symbol = symbols[i]
-            next_symbol = symbols[i + 1]
+        while i < len(brackets) - 1:
+            current_bracket = brackets[i]
+            next_bracket = brackets[i + 1]
             
             # Check if we have a valid opening-closing pair
-            if (current_symbol["symbol"] == "<" and next_symbol["symbol"] == ">"):
-                pos_open_ttag = current_symbol["pos_in_file"]
-                pos_close_ttag = next_symbol["pos_in_file"]
-                id_open_ttag = current_symbol["id"]
-                id_close_ttag = next_symbol["id"]
+            if (current_bracket["bracket"] == "<" and next_bracket["bracket"] == ">"):
+                pos_open_ttag = current_bracket["pos_in_file"]
+                pos_close_ttag = next_bracket["pos_in_file"]
+                id_open_ttag = current_bracket["id"]
+                id_close_ttag = next_bracket["id"]
                 
                 # Extract body content
                 body_tech_tag_html = self.extract_body_tech_tag_html(content, pos_open_ttag, pos_close_ttag)
@@ -626,10 +626,10 @@ class TechHTMLCollector:
                 tech_elements.append(element)
                 element_counter += 1
                 
-                # Skip the closing symbol in next iteration
+                # Skip the closing bracket in next iteration
                 i += 2
             else:
-                # Skip single symbol
+                # Skip single bracket
                 i += 1
         
         return tech_elements
@@ -647,30 +647,30 @@ class TechHTMLCollector:
         else:
             return ""
     
-    def create_tech_tag_html_elements_comms(self, symbols: List[Dict[str, Any]], content: str) -> List[Dict[str, Any]]:
-        """Create comment elements from symbols using TECH_HTML terminology."""
+    def create_tech_tag_html_elements_comms(self, brackets: List[Dict[str, Any]], content: str) -> List[Dict[str, Any]]:
+        """Create comment elements from brackets using TECH_HTML terminology."""
         comment_elements = []
         element_counter = 1
         
         # Stage 1: Process comment elements
         comment_stack = []
         
-        for i, symbol in enumerate(symbols):
-            if symbol["type_tech_tag"] == "comm_open":
+        for i, bracket in enumerate(brackets):
+            if bracket["type_tech_tag"] == "comm_open":
                 # Push comment opening to stack
                 comment_stack.append({
-                    "id": symbol["id"],
-                    "pos": symbol["pos_in_file"],
+                    "id": bracket["id"],
+                    "pos": bracket["pos_in_file"],
                     "index": i
                 })
-            elif symbol["type_tech_tag"] == "comm_close":
+            elif bracket["type_tech_tag"] == "comm_close":
                 if comment_stack:
                     # Found matching comment closing - create comment element
                     opening = comment_stack.pop()
                     pos_open_ttag = opening["pos"]
-                    pos_close_ttag = symbol["pos_in_file"]
+                    pos_close_ttag = bracket["pos_in_file"]
                     id_open_ttag = opening["id"]
-                    id_close_ttag = symbol["id"]
+                    id_close_ttag = bracket["id"]
                     
                     # Extract comment body
                     comment_body = self.extract_comment_body(content, pos_open_ttag, pos_close_ttag)
@@ -690,9 +690,9 @@ class TechHTMLCollector:
                     comment_elements.append(comment_element)
                     element_counter += 1
         
-        # Stage 2: Process regular HTML elements (skip comment-related symbols)
-        regular_symbols = [s for s in symbols if s["type_tech_tag"] == "regular"]
-        html_elements = self.create_tech_tag_html_elements(regular_symbols, content)
+        # Stage 2: Process regular HTML elements (skip comment-related brackets)
+        regular_brackets = [b for b in brackets if b["type_tech_tag"] == "regular"]
+        html_elements = self.create_tech_tag_html_elements(regular_brackets, content)
         
         # Stage 3: Combine and sort all elements by position
         all_elements = comment_elements + html_elements
@@ -716,14 +716,14 @@ class TechHTMLCollector:
                 with open(file_path, 'r', encoding='utf-8') as f:
                     content = f.read()
                 
-                # Get symbols for this file
-                symbols = self.scan_bytes_for_symbols(file_path)
+                # Get brackets for this file
+                brackets = self.scan_bytes_for_brackets(file_path)
                 
-                # Enhance symbols with context
-                enhanced_symbols = self.enhance_symbols_with_context(symbols, content)
+                # Enhance brackets with context
+                enhanced_brackets = self.enhance_brackets_with_context(brackets, content)
                 
                 # Create TECH_HTML elements with comment processing
-                tech_elements = self.create_tech_tag_html_elements_comms(enhanced_symbols, content)
+                tech_elements = self.create_tech_tag_html_elements_comms(enhanced_brackets, content)
                 
                 # Create result
                 result = {
@@ -753,8 +753,8 @@ class TechHTMLCollector:
         
         print(f"💾 Saved TECH_HTML element results to: {output_file}")
     
-    def save_symbol_results(self, results: List[Dict[str, Any]]):
-        """Save symbol collection results to JSON file."""
+    def save_bracket_results(self, results: List[Dict[str, Any]]):
+        """Save bracket collection results to JSON file."""
         output_file = self.config.get("output_database_byte", "json/all_openclose_bytes.json")
         output_path = Path(output_file)
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -762,10 +762,10 @@ class TechHTMLCollector:
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump(results, f, indent=2, ensure_ascii=False)
         
-        print(f"💾 Saved symbol results to: {output_file}")
+        print(f"💾 Saved bracket results to: {output_file}")
     
-    def process_all_files_for_symbols(self) -> List[Dict[str, Any]]:
-        """Process all input files for symbol collection."""
+    def process_all_files_for_brackets(self) -> List[Dict[str, Any]]:
+        """Process all input files for bracket collection."""
         results = []
         
         for file_path in self.config["input_files"]:
@@ -778,56 +778,56 @@ class TechHTMLCollector:
                 with open(file_path, 'r', encoding='utf-8') as f:
                     content = f.read()
                 
-                # Get basic symbols
-                symbols = self.scan_bytes_for_symbols(file_path)
+                # Get basic brackets
+                brackets = self.scan_bytes_for_brackets(file_path)
                 
-                # Enhance symbols with context
-                enhanced_symbols = self.enhance_symbols_with_context(symbols, content)
+                # Enhance brackets with context
+                enhanced_brackets = self.enhance_brackets_with_context(brackets, content)
                 
                 result = {
                     "inputhtmlfilename": Path(file_path).name,
-                    "symbols_collected": symbols,
-                    "symbols_collected_withdata": enhanced_symbols,
-                    "total_symbols": len(symbols),
-                    "opening_symbols": len([s for s in symbols if s["symbol"] == "<"]),
-                    "closing_symbols": len([s for s in symbols if s["symbol"] == ">"])
+                    "brackets_collected": brackets,
+                    "brackets_collected_withdata": enhanced_brackets,
+                    "total_brackets": len(brackets),
+                    "opening_brackets": len([b for b in brackets if b["bracket"] == "<"]),
+                    "closing_brackets": len([b for b in brackets if b["bracket"] == ">"])
                 }
                 results.append(result)
                 
             except Exception as e:
-                print(f"❌ Error processing symbols for {file_path}: {e}")
+                print(f"❌ Error processing brackets for {file_path}: {e}")
                 continue
         
         return results
     
-    def run_symbol_collection(self):
-        """Run the complete symbol collection process."""
-        print("🎯 Byte-Level Symbol Collector - TECH_HTML Version")
+    def run_bracket_collection(self):
+        """Run the complete bracket collection process."""
+        print("🎯 Byte-Level Bracket Collector - TECH_HTML Version")
         print("=" * 50)
         
         print(f"📋 Configuration loaded from: {self.config_file}")
         print(f"📁 Input files: {len(self.config['input_files'])}")
         print(f"💾 Output database: {self.config.get('output_database_byte', 'json/all_openclose_bytes.json')}")
         
-        # Collect symbols
-        results = self.process_all_files_for_symbols()
+        # Collect brackets
+        results = self.process_all_files_for_brackets()
         
         # Save results
-        self.save_symbol_results(results)
+        self.save_bracket_results(results)
         
         # Print summary
-        print("\n📊 Symbol Collection Summary:")
+        print("\n📊 Bracket Collection Summary:")
         print(f"   Files processed: {len(results)}")
         
-        total_symbols = sum(r.get('total_symbols', 0) for r in results)
-        total_opening = sum(r.get('opening_symbols', 0) for r in results)
-        total_closing = sum(r.get('closing_symbols', 0) for r in results)
+        total_brackets = sum(r.get('total_brackets', 0) for r in results)
+        total_opening = sum(r.get('opening_brackets', 0) for r in results)
+        total_closing = sum(r.get('closing_brackets', 0) for r in results)
         
-        print(f"   Total symbols: {total_symbols}")
-        print(f"   Opening symbols (<): {total_opening}")
-        print(f"   Closing symbols (>): {total_closing}")
+        print(f"   Total brackets: {total_brackets}")
+        print(f"   Opening brackets (<): {total_opening}")
+        print(f"   Closing brackets (>): {total_closing}")
         
-        print("✅ Symbol collection completed!")
+        print("✅ Bracket collection completed!")
     
     def run_tech_html_collection(self):
         """Run the complete TECH_HTML element collection process."""
@@ -876,10 +876,10 @@ class TechHTMLCollector:
         print(f"📁 Input files: {len(self.config['input_files'])}")
         print(f"💾 Output databases: {self.config.get('output_database_tech_elements', 'json/tech_tag_html_elements.json')}")
         
-        # Run symbol collection if enabled
-        if self.config.get("enable_symbol_collection", False):
+        # Run bracket collection if enabled
+        if self.config.get("enable_bracket_collection", False):
             print("\n" + "=" * 50)
-            self.run_symbol_collection()
+            self.run_bracket_collection()
         
         # Run TECH_HTML element collection if enabled
         if self.config.get("enable_tech_html_collection", False):

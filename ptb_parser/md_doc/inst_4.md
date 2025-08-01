@@ -1,7 +1,7 @@
 <!-- PRESERVE begin id_part1 -->
 <!-- PRESERVE improve only this part of instruction. use no more then 150 strings for this part. -->
 
-## Enhanced Symbol Collection with Context Data
+## Enhanced Bracket Collection with Context Data
 
 ### Current Implementation
 We have the symbol scanning function:
@@ -59,7 +59,7 @@ Input:
         0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7
         H|e|l|l|o| |<|h|t|m|l|>| |w|o|r|l|d
                     ^
-Symbol: "<" at position 6
+Bracket: "<" at position 6
 Context extraction:
 - chars_5_before: positions 1-5 →
          |1|2|3|4|5|
@@ -84,7 +84,7 @@ Input:
         0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7
         <|d|i|v|>|c|o|n|t|e|n|t|<|/|d|i|v|>
             ^
-Symbol: ">" at position 4
+Bracket: ">" at position 4
 Context extraction:
 - chars_5_before: positions -1-3 →
          |-1|0|1|2|3|
@@ -109,7 +109,7 @@ Input:
         0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5
         <|!|D|O|C|T|Y|P|E| |h|t|m|l|>|
         ^
-Symbol: "<" at position 0
+Bracket: "<" at position 0
 Context extraction:
 - chars_5_before: positions -5-(-1) →
        empty or ""
@@ -135,7 +135,7 @@ Input:
         0|1|2|3|4|5|6|7|8|9
         t|e|x|t| |<|b|r|>|
                     ^
-Symbol: ">" at position 8
+Bracket: ">" at position 8
 Context extraction:
 - chars_5_before: positions 3-7 →
          |3|4|5|6|7|
@@ -239,9 +239,9 @@ Based on the enhanced symbol data with context, we can detect HTML comments by a
 
 ### Implementation Requirements
 
-1. **Enhanced Symbol Processing**:
+1. **Enhanced Bracket Processing**:
    - Analyze `chars_5_before` and `chars_5_after` for comment patterns
-   - Add `type_tech_tag` field to each symbol
+   - Add `type_tech_tag` field to each bracket
    - Set values: `"comm_open"`, `"comm_close"`, or `"regular"`
 
 2. **Detection Rules**:
@@ -537,37 +537,37 @@ def mark_inner_comment_content(self, symbols_with_data: List[Dict]) -> List[Dict
 
 ### Implementation Requirements
 
-1. **Enhanced Symbol Processing**:
+1. **Enhanced Bracket Processing**:
    - Add `mark_inner_comment_content()` method
-   - Process symbols after comment detection but before validation
+   - Process brackets after comment detection but before validation
    - Preserve original `comm_open` and `comm_close` types
-   - Convert `regular` symbols to `inner_comm_content` when between comments
+   - Convert `regular` brackets to `inner_comm_content` when between comments
 
 2. **Stack-Based Processing**:
    - Use stack to track comment opening positions
-   - Mark all symbols between opening and closing comments
+   - Mark all brackets between opening and closing comments
    - Handle nested comments correctly (LIFO approach)
 
 3. **Type Classification Hierarchy**:
-   - `"comm_open"`: Comment opening symbol
-   - `"comm_close"`: Comment closing symbol  
-   - `"inner_comm_content"`: Symbols inside comment content
-   - `"regular"`: Regular HTML tag symbols (outside comments)
+   - `"comm_open"`: Comment opening bracket
+   - `"comm_close"`: Comment closing bracket  
+   - `"inner_comm_content"`: Brackets inside comment content
+   - `"regular"`: Regular HTML tag brackets (outside comments)
 
 ### Processing Logic
 
-1. **Initial Classification**: First classify symbols as `comm_open`, `comm_close`, or `regular`
-2. **Content Marking**: Process symbols sequentially:
+1. **Initial Classification**: First classify brackets as `comm_open`, `comm_close`, or `regular`
+2. **Content Marking**: Process brackets sequentially:
    - When `comm_open` found → push to stack
-   - When `comm_close` found → pop from stack and mark intermediate symbols
-   - Mark all `regular` symbols between `comm_open` and `comm_close` as `inner_comm_content`
-3. **Final Output**: Enhanced symbols with complete comment content classification
+   - When `comm_close` found → pop from stack and mark intermediate brackets
+   - Mark all `regular` brackets between `comm_open` and `comm_close` as `inner_comm_content`
+3. **Final Output**: Enhanced brackets with complete comment content classification
 
 ### Integration with Existing System
 
-- Add to `enhance_symbols_with_context()` method after comment detection
+- Add to `enhance_brackets_with_context()` method after comment detection
 - Maintain backward compatibility with existing validation
-- Update comment validation to account for `inner_comm_content` symbols
+- Update comment validation to account for `inner_comm_content` brackets
 - Preserve all existing fields and functionality
 
 <!-- PRESERVE end id_part4 -->

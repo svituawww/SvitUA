@@ -47,8 +47,8 @@ def test_unified_validation():
         # Display cross-validation analysis
         cross_analysis = unified_report.get("cross_validation_analysis", {})
         print(f"\n🔗 Cross-Validation Analysis:")
-        print(f"   Symbol-Comment Correlation: {cross_analysis.get('symbol_comment_correlation', 0.0):.2f}")
-        print(f"   Element-Symbol Alignment: {cross_analysis.get('element_symbol_alignment', 0.0):.2f}")
+            print(f"   Bracket-Comment Correlation: {cross_analysis.get('bracket_comment_correlation', 0.0):.2f}")
+    print(f"   Element-Bracket Alignment: {cross_analysis.get('element_bracket_alignment', 0.0):.2f}")
         print(f"   Overall Structure Integrity: {cross_analysis.get('overall_structure_integrity', 0.0):.2f}")
         
         # Display detailed validation results
@@ -60,13 +60,13 @@ def test_unified_validation():
         comment_val = validation_details.get("comment_validation", {})
         print(f"   Comment Validation: {comment_val.get('comment_validation_status', 'UNKNOWN')}")
         print(f"     Score: {comment_val.get('comment_consistency_score', 0.0):.2f}")
-        print(f"     Pairs: {comment_val.get('valid_comment_pairs', 0)}/{comment_val.get('total_comment_symbols', 0)}")
+        print(f"     Pairs: {comment_val.get('valid_comment_pairs', 0)}/{comment_val.get('total_comment_brackets', 0)}")
         
-        # Symbol validation
-        symbol_val = validation_details.get("symbol_validation", {})
-        print(f"   Symbol Validation: {symbol_val.get('symbol_validation_status', 'UNKNOWN')}")
-        print(f"     Score: {symbol_val.get('symbol_consistency_score', 0.0):.2f}")
-        print(f"     Pairs: {symbol_val.get('valid_pairs', 0)}/{symbol_val.get('total_symbols', 0)}")
+        # Bracket validation
+        bracket_val = validation_details.get("bracket_validation", {})
+        print(f"   Bracket Validation: {bracket_val.get('bracket_validation_status', 'UNKNOWN')}")
+        print(f"     Score: {bracket_val.get('bracket_consistency_score', 0.0):.2f}")
+        print(f"     Pairs: {bracket_val.get('valid_pairs', 0)}/{bracket_val.get('total_brackets', 0)}")
         
         # Element sequence validation
         element_val = validation_details.get("element_sequence_validation", {})

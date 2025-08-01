@@ -38,7 +38,7 @@ CREATE TABLE files (
 );
 ```
 
-### **2. Symbols Table**
+### **2. Brackets Table**
 ```sql
 CREATE TABLE symbols (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -241,7 +241,7 @@ class HTMLParserDatabase:
                 SELECT * FROM files WHERE id = ?
             """, (file_id,)).fetchone()
             
-            # Symbol counts
+            # Bracket counts
             symbol_stats = conn.execute("""
                 SELECT 
                     COUNT(*) as total_symbols,
@@ -360,7 +360,7 @@ FROM validation_results
 GROUP BY validation_type;
 ```
 
-### **3. Symbol Distribution Analysis**
+### **3. Bracket Distribution Analysis**
 ```sql
 -- Analyze symbol distribution by file
 SELECT 

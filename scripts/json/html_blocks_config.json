@@ -1,0 +1,73 @@
+{
+  "html_blocks": {
+    "head": {
+      "start": "<head",
+      "end": "</head>",
+      "type": "document",
+      "category": "metadata",
+      "required": true,
+      "nesting": "root"
+    },
+    "header": {
+      "start": "<header",
+      "end": "</header>",
+      "type": "navigation",
+      "category": "layout",
+      "required": false,
+      "nesting": "body"
+    },
+    "section": {
+      "start": "<section",
+      "end": "</section>",
+      "type": "content",
+      "category": "content",
+      "required": false,
+      "nesting": "body",
+      "attributes": ["id", "class"]
+    },
+    "footer": {
+      "start": "<footer",
+      "end": "</footer>",
+      "type": "navigation",
+      "category": "layout",
+      "required": false,
+      "nesting": "body"
+    },
+    "nav": {
+      "start": "<nav",
+      "end": "</nav>",
+      "type": "navigation",
+      "category": "layout",
+      "required": false,
+      "nesting": "any"
+    },
+    "main": {
+      "start": "<main",
+      "end": "</main>",
+      "type": "content",
+      "category": "content",
+      "required": false,
+      "nesting": "body"
+    },
+    "aside": {
+      "start": "<aside",
+      "end": "</aside>",
+      "type": "content",
+      "category": "content",
+      "required": false,
+      "nesting": "body"
+    }
+  },
+  "processing_options": {
+    "include_unidentified": true,
+    "generate_hierarchy": true,
+    "performance_tracking": true,
+    "output_format": "detailed"
+  },
+  "validation_rules": {
+    "allow_overlaps": false,
+    "require_complete_coverage": true,
+    "priority_order": ["head", "header", "nav", "section", "footer"],
+    "consistency_check": true
+  }
+} 

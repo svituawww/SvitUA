@@ -1,0 +1,28 @@
+{
+  "input_output": {
+    "input_file": "svituawww.github.io/output/index_html_.html",
+    "output_file": "svituawww.github.io/output/reconstructed_html.html",
+    "elements_json": "svituawww.github.io/output/elements_parsed.json"
+  },
+  "validation_settings": {
+    "strict_mode": false,
+    "ignore_whitespace": false,
+    "ignore_comments": false,
+    "functional_equivalence": true,
+    "structural_check": true,
+    "content_check": true,
+    "comparetion_pereachbyte": true
+  },
+  "processing_options": {
+    "performance_tracking": true,
+    "detailed_reporting": true,
+    "save_intermediate": false,
+    "backup_original": true
+  },
+  "success_criteria": {
+    "content_preservation": true,
+    "structure_integrity": true,
+    "functional_equivalence": true,
+    "data_completeness": true
+  }
+} 

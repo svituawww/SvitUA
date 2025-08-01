@@ -1,0 +1,32 @@
+{
+  "project_info": {
+    "name": "ptb_parser",
+    "version": "1.0.0",
+    "description": "Byte-Perfect HTML Parser and Reconstruction System",
+    "created_date": "2025-07-30",
+    "author": "SVIT UA Development Team"
+  },
+  "directories": {
+    "full_root_path_project": "/Users/nirsixadmin/Desktop/SvitUA/ptb_parser",
+    "project_root_dir": ".",
+    "script_dir": "scripts",
+    "input_dir": "input",
+    "output_dir": "output",
+    "doc_inst_dir": "md_doc",
+    "json_dir": "json",
+    "tests_dir": "tests"
+  },
+  "file_patterns": {
+    "input_files": "*.html",
+    "output_files": "*.html",
+    "log_files": "*.log",
+    "backup_files": "*.bak"
+  },
+  "maintenance": {
+    "cleanup_old_files": true,
+    "cleanup_interval_days": 30,
+    "archive_old_logs": true,
+    "compress_old_backups": true,
+    "max_backup_age_days": 90
+  }
+} 

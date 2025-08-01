@@ -1,0 +1,81 @@
+<!-- PRESERVE improve only this part of instruction. use no more then 100 strings for this part. And give several variants for each question -->
+<!-- PRESERVE begin  id_part1 -->
+
+I am interested in cooperation. 
+I want to be sure that my chances are high enough to start interview processes. 
+I have no acquaintances in Sweden. 
+You directly cooperate with a client from the financial sector. 
+You know how staffed the team is already. 
+When are you ready to give information about the client's name. 
+We are talking about the probationary period. 
+Estimated duration of the contract.
+
+
+<!-- PRESERVE end  id_part1 -->
+
+
+<!-- PRESERVE improve only this part of instruction. use no more then 100 strings for this part. And give several variants for each question -->
+<!-- PRESERVE begin  id_part2 -->
+
+I am interested in cooperation and would like to understand my chances of moving forward in the interview process.  
+Could you please share your assessment of my fit for the role at this stage?
+
+Variant 1:  
+- Based on your experience, how likely is it that my profile will be shortlisted for an interview?
+- Are there any specific skills or experiences you believe would strengthen my application?
+
+Variant 2:  
+- What is the typical profile of candidates who progress to interviews for this position?
+- Do you see any gaps in my background that I should address before proceeding?
+
+---
+
+I do not have any acquaintances in Sweden and am unfamiliar with the local job market.  
+Could you advise on how this might impact my application or integration into the team?
+
+Variant 1:  
+- Does not having local references or contacts affect my chances?
+- Are there resources or support for international candidates?
+
+Variant 2:  
+- How do you support candidates relocating or integrating into Swedish teams?
+- Is prior experience in Sweden a requirement or an advantage?
+
+---
+
+You mentioned direct cooperation with a client in the financial sector.  
+Could you clarify the current team structure and how many positions are still open?
+
+Variant 1:  
+- How many team members are currently on the project?
+- Are you looking to expand the team further?
+
+Variant 2:  
+- Is the team fully staffed, or are there ongoing hiring needs?
+- What is the typical team size for such projects?
+
+---
+
+When will you be able to disclose the client’s name?
+
+Variant 1:  
+- At what stage of the process do you usually share the client’s identity?
+- Is it possible to know the client before the interview, or only after a certain step?
+
+Variant 2:  
+- Will the client’s name be revealed before or after the first interview?
+- Are there confidentiality agreements that delay this disclosure?
+
+---
+
+Regarding the probationary period and contract terms:
+
+Variant 1:  
+- What is the standard probationary period for this role?
+- Is there flexibility in the contract duration or terms?
+
+Variant 2:  
+- Could you provide details on the expected contract length and probation terms?
+- Are extensions or permanent offers common after the initial contract?
+
+<!-- PRESERVE end  id_part2 -->

@@ -1,0 +1,17 @@
+# SVIT UA Image Scanner Requirements
+# Core packages for HTML parsing and image scanning
+
+# HTML parsing and manipulation
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+
+# HTTP requests (if needed for external image validation)
+requests>=2.31.0
+
+# Image processing (for metadata extraction)
+Pillow>=10.0.0
+
+# Additional utilities
+pathlib2>=2.3.7  # For older Python versions
+typing-extensions>=4.7.0  # For type hints 
+jinja2>=3.1.2  # For templating if needed

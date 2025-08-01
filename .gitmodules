@@ -1,6 +1,3 @@
 [submodule "svituawww.github.io"]
 	path = svituawww.github.io
 	url = https://github.com/svituawww/svituawww.github.io.git
-[submodule "scripts-repo"]
-	path = scripts-repo
-	url = ./scripts-repo

@@ -13,6 +13,8 @@
     "input_dir": "input",
     "output_dir": "output",
     "doc_inst_dir": "md_doc",
+    "sqllite_dir": "sqllite",
+    "notebook_dir": "notebook",
     "json_dir": "json",
     "tests_dir": "tests"
   },

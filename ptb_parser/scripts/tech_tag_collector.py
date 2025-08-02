@@ -78,7 +78,7 @@ class TechHTMLCollector:
             for pos, char in enumerate(content):
                 if char in ['<', '>']:
                     bracket_data = {
-                        "id": bracket_counter,
+                        "inner_id": bracket_counter,
                         "order": bracket_counter,
                         "bracket": char,
                         "pos_in_file": pos
@@ -128,7 +128,7 @@ class TechHTMLCollector:
             
             # Create enhanced bracket data
             enhanced_bracket = {
-                "id": bracket["id"],
+                "inner_id": bracket["inner_id"],
                 "order": bracket["order"],
                 "bracket": bracket_char,
                 "pos_in_file": pos,
@@ -167,7 +167,7 @@ class TechHTMLCollector:
             if bracket["type_tech_tag"] == "comm_open":
                 # Push comment opening to stack
                 comment_stack.append({
-                    "id": bracket["id"],
+                    "id": bracket["inner_id"],
                     "pos": bracket["pos_in_file"],
                     "index": i
                 })
@@ -205,7 +205,7 @@ class TechHTMLCollector:
                 validation_results["comment_opening_brackets"] += 1
                 validation_results["total_comment_brackets"] += 1
                 comment_opening_stack.append({
-                    "id": bracket["id"],
+                    "id": bracket["inner_id"],
                     "pos": bracket["pos_in_file"],
                     "index": i
                 })
@@ -219,7 +219,7 @@ class TechHTMLCollector:
                     validation_results["valid_comment_pairs"] += 1
                 else:
                     # Orphaned comment closing bracket
-                    validation_results["orphaned_comment_closings"].append(bracket["id"])
+                    validation_results["orphaned_comment_closings"].append(bracket["inner_id"])
         
         # Check for orphaned comment opening brackets
         for opening in comment_opening_stack:
@@ -259,7 +259,7 @@ class TechHTMLCollector:
             if bracket["bracket"] == "<":
                 validation_results["opening_brackets"] += 1
                 opening_stack.append({
-                    "id": bracket["id"],
+                    "id": bracket["inner_id"],
                     "pos": bracket["pos_in_file"],
                     "index": i
                 })
@@ -272,7 +272,7 @@ class TechHTMLCollector:
                     validation_results["valid_pairs"] += 1
                 else:
                     # Orphaned closing bracket
-                    validation_results["orphaned_closings"].append(bracket["id"])
+                    validation_results["orphaned_closings"].append(bracket["inner_id"])
         
         # Check for orphaned opening brackets
         for opening in opening_stack:
@@ -307,16 +307,15 @@ class TechHTMLCollector:
             current_elem = list_tech_tech[i]
             next_elem = list_tech_tech[i + 1]
             
-            # Check if current element closes exactly before next element opens
-            expected_next_open = current_elem["id_close_ttag"] + 1
-            actual_next_open = next_elem["id_open_ttag"]
+            expected_next_open = current_elem["inner_id_close_ttag"] + 1
+            actual_next_open = next_elem["inner_id_open_ttag"]
             
             if expected_next_open != actual_next_open:
                 error_info = {
                     "pair_index": i,
                     "current_element_id": current_elem["id"],
                     "next_element_id": next_elem["id"],
-                    "current_id_close": current_elem["id_close_ttag"],
+                    "current_id_close": current_elem["inner_id_close_ttag"],
                     "expected_next_id_open": expected_next_open,
                     "actual_next_id_open": actual_next_open,
                     "gap_or_overlap": actual_next_open - expected_next_open
@@ -599,8 +598,8 @@ class TechHTMLCollector:
             if (current_bracket["bracket"] == "<" and next_bracket["bracket"] == ">"):
                 pos_open_ttag = current_bracket["pos_in_file"]
                 pos_close_ttag = next_bracket["pos_in_file"]
-                id_open_ttag = current_bracket["id"]
-                id_close_ttag = next_bracket["id"]
+                id_open_ttag = current_bracket["inner_id"]
+                id_close_ttag = next_bracket["inner_id"]
                 
                 # Extract body content
                 body_tech_tag_html = self.extract_body_tech_tag_html(content, pos_open_ttag, pos_close_ttag)
@@ -614,8 +613,8 @@ class TechHTMLCollector:
                 # Create element
                 element = {
                     "id": element_counter,
-                    "id_open_ttag": id_open_ttag,
-                    "id_close_ttag": id_close_ttag,
+                    "inner_id_open_ttag": id_open_ttag,
+                    "inner_id_close_ttag": id_close_ttag,
                     "pos_open_ttag": pos_open_ttag,
                     "pos_close_ttag": pos_close_ttag,
                     "type_ttag": type_ttag,
@@ -659,7 +658,7 @@ class TechHTMLCollector:
             if bracket["type_tech_tag"] == "comm_open":
                 # Push comment opening to stack
                 comment_stack.append({
-                    "id": bracket["id"],
+                    "id": bracket["inner_id"],
                     "pos": bracket["pos_in_file"],
                     "index": i
                 })
@@ -670,7 +669,7 @@ class TechHTMLCollector:
                     pos_open_ttag = opening["pos"]
                     pos_close_ttag = bracket["pos_in_file"]
                     id_open_ttag = opening["id"]
-                    id_close_ttag = bracket["id"]
+                    id_close_ttag = bracket["inner_id"]
                     
                     # Extract comment body
                     comment_body = self.extract_comment_body(content, pos_open_ttag, pos_close_ttag)
@@ -678,8 +677,8 @@ class TechHTMLCollector:
                     # Create comment element
                     comment_element = {
                         "id": element_counter,
-                        "id_open_ttag": id_open_ttag,
-                        "id_close_ttag": id_close_ttag,
+                        "inner_id_open_ttag": id_open_ttag,
+                        "inner_id_close_ttag": id_close_ttag,
                         "pos_open_ttag": pos_open_ttag,
                         "pos_close_ttag": pos_close_ttag,
                         "type_ttag": "unnamed",

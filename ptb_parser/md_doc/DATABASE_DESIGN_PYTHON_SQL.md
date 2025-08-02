@@ -41,8 +41,9 @@ CREATE TABLE files (
 ### **2. Brackets Table**
 ```sql
 CREATE TABLE brackets (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    rec_id INTEGER PRIMARY KEY AUTOINCREMENT,
     file_id INTEGER NOT NULL,
+    inner_id INTEGER NOT NULL,
     bracket_order INTEGER NOT NULL,
     bracket_type VARCHAR(10) NOT NULL, -- '<' or '>'
     position INTEGER NOT NULL,
@@ -56,12 +57,14 @@ CREATE TABLE brackets (
 );
 ```
 
-### **3. HTML Elements Table**
+### **3. TECH HTML Elements Table**
 ```sql
-CREATE TABLE html_elements (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+CREATE TABLE tech_html_elements (
+    rec_id INTEGER PRIMARY KEY AUTOINCREMENT,
     file_id INTEGER NOT NULL,
     element_order INTEGER NOT NULL,
+    inner_id_open_ttag INTEGER NOT NULL,
+    inner_id_close_ttag INTEGER NOT NULL,
     pos_open_ttag INTEGER NOT NULL,
     pos_close_ttag INTEGER NOT NULL,
     type_ttag VARCHAR(50) DEFAULT 'unnamed', -- 'standard_named', 'custom', 'unnamed'
@@ -143,8 +146,9 @@ class HTMLParserDatabase:
             # Brackets table
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS brackets (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    rec_id INTEGER PRIMARY KEY AUTOINCREMENT,
                     file_id INTEGER NOT NULL,
+                    inner_id INTEGER NOT NULL,
                     bracket_order INTEGER NOT NULL,
                     bracket_type VARCHAR(10) NOT NULL,
                     position INTEGER NOT NULL,
@@ -158,12 +162,14 @@ class HTMLParserDatabase:
                 )
             """)
             
-            # HTML Elements table
+            # TECH HTML Elements table
             conn.execute("""
-                CREATE TABLE IF NOT EXISTS html_elements (
+                CREATE TABLE IF NOT EXISTS tech_html_elements (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     file_id INTEGER NOT NULL,
                     element_order INTEGER NOT NULL,
+                    inner_id_open_ttag INTEGER NOT NULL,
+                    inner_id_close_ttag INTEGER NOT NULL,
                     pos_open_ttag INTEGER NOT NULL,
                     pos_close_ttag INTEGER NOT NULL,
                     type_ttag VARCHAR(50) DEFAULT 'unnamed',
@@ -226,11 +232,12 @@ class HTMLParserDatabase:
             for bracket in brackets:
                 conn.execute("""
                     INSERT OR REPLACE INTO brackets 
-                    (file_id, bracket_order, bracket_type, position, chars_before, 
+                    (file_id, inner_id, bracket_order, bracket_type, position, chars_before, 
                      chars_after, full_context, type_tech_tag)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
                     file_id,
+                    bracket.get('inner_id', 0),
                     bracket.get('order', 0),
                     bracket.get('bracket', ''),
                     bracket.get('pos_in_file', 0),
@@ -241,19 +248,21 @@ class HTMLParserDatabase:
                 ))
             conn.commit()
     
-    def add_html_elements(self, file_id: int, elements: List[Dict[str, Any]]):
-        """Add HTML elements for a file."""
+    def add_tech_html_elements(self, file_id: int, elements: List[Dict[str, Any]]):
+        """Add TECH HTML elements for a file."""
         with sqlite3.connect(self.db_path) as conn:
             for element in elements:
                 conn.execute("""
-                    INSERT OR REPLACE INTO html_elements 
-                    (file_id, element_order, pos_open_ttag, pos_close_ttag,
-                     type_ttag, name_tech_tag_html, body_tech_tag_html,
-                     is_comment, comment_body)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    INSERT OR REPLACE INTO tech_html_elements 
+                    (file_id, element_order, inner_id_open_ttag, inner_id_close_ttag,
+                     pos_open_ttag, pos_close_ttag, type_ttag, name_tech_tag_html, 
+                     body_tech_tag_html, is_comment, comment_body)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
                     file_id,
                     element.get('id', 0),
+                    element.get('inner_id_open_ttag', 0),
+                    element.get('inner_id_close_ttag', 0),
                     element.get('pos_open_ttag', 0),
                     element.get('pos_close_ttag', 0),
                     element.get('type_ttag', 'unnamed'),
@@ -304,15 +313,15 @@ class HTMLParserDatabase:
                 FROM brackets WHERE file_id = ?
             """, (file_id,)).fetchone()
             
-            # Element counts
+            # TECH HTML Element counts
             element_stats = conn.execute("""
                 SELECT 
-                    COUNT(*) as total_elements,
+                    COUNT(*) as total_tech_html_elements,
                     SUM(CASE WHEN type_ttag = 'standard_named' THEN 1 ELSE 0 END) as standard_elements,
                     SUM(CASE WHEN type_ttag = 'custom' THEN 1 ELSE 0 END) as custom_elements,
                     SUM(CASE WHEN type_ttag = 'unnamed' THEN 1 ELSE 0 END) as unnamed_elements,
                     SUM(CASE WHEN is_comment = 1 THEN 1 ELSE 0 END) as comment_elements
-                FROM html_elements WHERE file_id = ?
+                FROM tech_html_elements WHERE file_id = ?
             """, (file_id,)).fetchone()
             
             # Validation results
@@ -324,7 +333,7 @@ class HTMLParserDatabase:
             return {
                 'file_info': dict(zip([col[0] for col in conn.description], file_info)) if file_info else {},
                 'bracket_stats': dict(zip([col[0] for col in conn.description], bracket_stats)) if bracket_stats else {},
-                'element_stats': dict(zip([col[0] for col in conn.description], element_stats)) if element_stats else {},
+                'tech_html_element_stats': dict(zip([col[0] for col in conn.description], element_stats)) if element_stats else {},
                 'validation_results': [dict(zip(['validation_type', 'validation_status', 'validation_score'], row)) 
                                      for row in validation_results]
             }
@@ -335,12 +344,12 @@ class HTMLParserDatabase:
             return conn.execute("""
                 SELECT 
                     f.id, f.filename, f.file_size, f.status, f.created_at,
-                    COUNT(b.id) as bracket_count,
-                    COUNT(h.id) as element_count,
-                    COUNT(v.id) as validation_count
+                                    COUNT(b.id) as bracket_count,
+                COUNT(h.id) as tech_html_element_count,
+                COUNT(v.id) as validation_count
                 FROM files f
                 LEFT JOIN brackets b ON f.id = b.file_id
-                LEFT JOIN html_elements h ON f.id = h.file_id
+                LEFT JOIN tech_html_elements h ON f.id = h.file_id
                 LEFT JOIN validation_results v ON f.id = v.file_id
                 GROUP BY f.id
                 ORDER BY f.created_at DESC
@@ -366,9 +375,9 @@ class TechHTMLCollectorWithDB(TechHTMLCollector):
         enhanced_brackets = self.enhance_brackets_with_context(brackets, self.read_file_content(file_path))
         self.db.add_brackets(file_id, enhanced_brackets)
         
-        # Process HTML elements
-        html_elements = self.create_tech_tag_html_elements_comms(enhanced_brackets, self.read_file_content(file_path))
-        self.db.add_html_elements(file_id, html_elements)
+        # Process TECH HTML elements
+        tech_html_elements = self.create_tech_tag_html_elements_comms(enhanced_brackets, self.read_file_content(file_path))
+        self.db.add_tech_html_elements(file_id, tech_html_elements)
         
         # Run validations
         validation_results = self.run_comprehensive_validation(file_path)
@@ -394,7 +403,7 @@ SELECT
     h.comment_body,
     h.pos_open_ttag,
     h.pos_close_ttag
-FROM html_elements h
+FROM tech_html_elements h
 JOIN files f ON h.file_id = f.id
 WHERE h.is_comment = 1
 ORDER BY f.filename, h.element_order;
@@ -429,13 +438,13 @@ ORDER BY total_brackets DESC;
 
 ### **4. Element Type Analysis**
 ```sql
--- Analyze HTML element types across all files
+-- Analyze TECH HTML element types across all files
 SELECT 
     type_ttag,
     COUNT(*) as element_count,
     COUNT(DISTINCT file_id) as file_count,
     AVG(pos_close_ttag - pos_open_ttag) as avg_element_length
-FROM html_elements
+FROM tech_html_elements
 GROUP BY type_ttag
 ORDER BY element_count DESC;
 ```
@@ -464,8 +473,8 @@ ORDER BY overall_score DESC;
 CREATE INDEX idx_brackets_file_id ON brackets(file_id);
 CREATE INDEX idx_brackets_type ON brackets(type_tech_tag);
 CREATE INDEX idx_brackets_position ON brackets(position);
-CREATE INDEX idx_elements_file_id ON html_elements(file_id);
-CREATE INDEX idx_elements_type ON html_elements(type_ttag);
+CREATE INDEX idx_tech_html_elements_file_id ON tech_html_elements(file_id);
+CREATE INDEX idx_tech_html_elements_type ON tech_html_elements(type_ttag);
 CREATE INDEX idx_validation_file_id ON validation_results(file_id);
 CREATE INDEX idx_validation_type ON validation_results(validation_type);
 CREATE INDEX idx_files_filename ON files(filename);
@@ -478,11 +487,12 @@ def batch_insert_brackets(self, file_id: int, brackets: List[Dict[str, Any]]):
     with sqlite3.connect(self.db_path) as conn:
         conn.executemany("""
             INSERT OR REPLACE INTO brackets 
-            (file_id, bracket_order, bracket_type, position, chars_before, 
+            (file_id, inner_id, bracket_order, bracket_type, position, chars_before, 
              chars_after, full_context, type_tech_tag)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, [(
             file_id,
+            bracket.get('inner_id', 0),
             bracket.get('order', 0),
             bracket.get('bracket', ''),
             bracket.get('pos_in_file', 0),
@@ -528,7 +538,7 @@ def export_file_data(self, file_id: int) -> Dict[str, Any]:
         """, (file_id,)).fetchall()
         
         elements = conn.execute("""
-            SELECT * FROM html_elements WHERE file_id = ? ORDER BY element_order
+            SELECT * FROM tech_html_elements WHERE file_id = ? ORDER BY element_order
         """, (file_id,)).fetchall()
         
         validations = conn.execute("""
@@ -562,7 +572,7 @@ def import_file_data(self, data: Dict[str, Any]) -> int:
         self.add_brackets(file_id, data['brackets'])
     
     if 'elements' in data:
-        self.add_html_elements(file_id, data['elements'])
+        self.add_tech_html_elements(file_id, data['elements'])
     
     if 'validations' in data:
         for validation in data['validations']:
@@ -598,7 +608,7 @@ def get_processing_statistics(self) -> Dict[str, Any]:
                 COUNT(DISTINCT f.id) as total_files,
                 SUM(f.file_size) as total_size,
                 COUNT(b.id) as total_brackets,
-                COUNT(h.id) as total_elements,
+                COUNT(h.id) as total_tech_html_elements,
                 COUNT(v.id) as total_validations,
                 AVG(v.validation_score) as avg_validation_score
             FROM files f
@@ -681,7 +691,7 @@ print(f"Processed {stats['bracket_stats']['total_brackets']} brackets")
 # Get all files summary
 summary = db.get_all_files_summary()
 for file in summary:
-    print(f"File: {file['filename']}, Brackets: {file['bracket_count']}, Elements: {file['element_count']}")
+    print(f"File: {file['filename']}, Brackets: {file['bracket_count']}, TECH HTML Elements: {file['tech_html_element_count']}")
 
 # Get processing statistics
 stats = db.get_processing_statistics()
@@ -703,7 +713,7 @@ file_id = collector.process_file_with_database("input/test1.html")
 stats = db.get_file_statistics(file_id)
 print(f"File: {stats['file_info']['filename']}")
 print(f"Brackets: {stats['bracket_stats']['total_brackets']}")
-print(f"Elements: {stats['element_stats']['total_elements']}")
+print(f"TECH HTML Elements: {stats['tech_html_element_stats']['total_tech_html_elements']}")
 ```
 
 ### **Advanced Analytics:**

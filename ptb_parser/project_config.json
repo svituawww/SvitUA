@@ -16,13 +16,18 @@
     "sqllite_dir": "sqllite",
     "notebook_dir": "notebook",
     "json_dir": "json",
-    "tests_dir": "tests"
+    "tests_dir": "tests",
+    "test_output_dir": "tests/output",
+    "input_file_store_dir": "input_file_store"
   },
   "file_patterns": {
     "input_files": "*.html",
     "output_files": "*.html",
     "log_files": "*.log",
-    "backup_files": "*.bak"
+    "backup_files": "*.bak",
+    "selenium_test_files": "selenium_*",
+    "uuid_test_files": "uuid_*",
+    "mapping_files": "*_mapping_*.json"
   },
   "maintenance": {
     "cleanup_old_files": true,
@@ -30,5 +35,14 @@
     "archive_old_logs": true,
     "compress_old_backups": true,
     "max_backup_age_days": 90
+  },
+  "test_output_locations": {
+    "selenium_selective_files": "tests/output/selenium_selective_*.html",
+    "selenium_mapping_files": "tests/output/selenium_mapping_*.json",
+    "uuid_transformed_files": "tests/output/uuid_transformed_*.html",
+    "uuid_mapping_files": "tests/output/uuid_mapping_*.json"
+  },
+  "production_output_locations": {
+    "tech_test_files": "output/*_tech_test*.html"
   }
 } 

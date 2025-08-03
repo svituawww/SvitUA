@@ -113,7 +113,7 @@ class EnhancedFileProcessor:
         
         # Process TECH HTML elements
         print(f"   🏷️  Processing TECH HTML elements...")
-        tech_elements = self.collector.create_tech_tag_html_elements(enhanced_brackets, content)
+        tech_elements = self.collector.create_tech_tag_html_elements_comms(enhanced_brackets, content)
         
         # Store TECH HTML elements in database
         if tech_elements:
@@ -137,6 +137,16 @@ class EnhancedFileProcessor:
                 if validation_data:
                     self.db.add_validation_result_with_file_specific_id(file_id, validation_type, validation_data)
                     print(f"   ✅ Stored {validation_type} validation")
+        
+        # Process content extraction (id_part2 integration)
+        print(f"   📄 Processing content extraction...")
+        content_result = self.db.process_file_content(file_id, limit=10)
+        print(f"   ✅ Content processing complete: {content_result['created']} records created")
+        
+        # Process content items (id_part2 implementation)
+        print(f"   📦 Processing content items...")
+        content_items_result = self.db.process_file_content_items(file_id, limit=10)
+        print(f"   ✅ Content items processing complete: {content_items_result['created']} items created")
     
     def print_processing_summary(self, stats: Dict[str, Any]):
         """Print comprehensive processing summary."""
@@ -173,6 +183,12 @@ class EnhancedFileProcessor:
                 print(f"      ├─ {validation['validation_type']}: {validation['validation_status']}")
                 print(f"      │  Score: {validation['validation_score']:.2f}")
                 print(f"      │  Items: {validation['valid_items']}/{validation['total_items']} valid")
+        
+        # Add content statistics if available
+        if 'content_result' in locals():
+            print(f"   📄 Content: {content_result.get('created', 0)} records created")
+            print(f"      ├─ Elements: {content_result.get('processed', 0)} processed")
+            print(f"      └─ Records: {len(content_result.get('records', []))} total")
     
     def process_all_files(self):
         """Process all files specified in configuration."""

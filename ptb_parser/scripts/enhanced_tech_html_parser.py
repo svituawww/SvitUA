@@ -13,13 +13,18 @@ import zlib
 import uuid
 import os
 import shutil
+import re
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 from datetime import datetime
 
+# Import content extraction module
+from extract_content_items import ContentExtractor
+
 class EnhancedTechHTMLParserDatabase:
     def __init__(self, db_path: str = "sqllite/tech_html_parser.db"):
         self.db_path = db_path
+        self.content_extractor = ContentExtractor()
         self.init_enhanced_database()
     
     def init_enhanced_database(self):
@@ -131,11 +136,38 @@ class EnhancedTechHTMLParserDatabase:
                     pos_start INTEGER NOT NULL,
                     pos_end INTEGER NOT NULL,
                     content_body TEXT,
+                    type_content VARCHAR(10) DEFAULT 'element',  -- Content type classification
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- Last update timestamp
                     PRIMARY KEY (file_id, content_id),  -- Composite primary key
                     FOREIGN KEY (file_id) REFERENCES files(id),
                     FOREIGN KEY (techhtml_id_start) REFERENCES tech_html_elements(techhtml_id),
                     FOREIGN KEY (techhtml_id_end) REFERENCES tech_html_elements(techhtml_id)    
+                )
+            """)
+            
+            # Add new columns to existing table if they don't exist (for backward compatibility)
+            try:
+                conn.execute("ALTER TABLE content_tech_html ADD COLUMN type_content VARCHAR(10) DEFAULT 'element'")
+            except sqlite3.OperationalError:
+                pass  # Column already exists
+                
+            try:
+                conn.execute("ALTER TABLE content_tech_html ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+            except sqlite3.OperationalError:
+                pass  # Column already exists
+            
+            # Content Items Tech HTML table (id_part2 specification)
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS content_items_tech_html (
+                    item_id INTEGER,    -- Auto-incremental per content_id
+                    content_id INTEGER,
+                    type_content VARCHAR(15) DEFAULT 'img_src',  -- Content item type classification
+                    item_body TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- Last update timestamp
+                    PRIMARY KEY (item_id, content_id),  -- Composite primary key
+                    FOREIGN KEY (content_id) REFERENCES content_tech_html(content_id)    
                 )
             """)
             
@@ -152,6 +184,8 @@ class EnhancedTechHTMLParserDatabase:
             conn.execute("CREATE INDEX IF NOT EXISTS idx_validation_type ON validation_results(validation_type)")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_content_tech_html_file_id ON content_tech_html(file_id)")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_content_tech_html_positions ON content_tech_html(pos_start, pos_end)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_content_items_tech_html_content_id ON content_items_tech_html(content_id)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_content_items_tech_html_type ON content_items_tech_html(type_content)")
             
             conn.commit()
     
@@ -217,8 +251,17 @@ class EnhancedTechHTMLParserDatabase:
             tables_with_file_id = [
                 'brackets',
                 'tech_html_elements', 
-                'validation_results'
+                'validation_results',
+                'content_tech_html'
             ]
+            
+            # Delete content_items_tech_html records that reference content_tech_html records for this file
+            conn.execute("""
+                DELETE FROM content_items_tech_html 
+                WHERE content_id IN (
+                    SELECT content_id FROM content_tech_html WHERE file_id = ?
+                )
+            """, (file_id,))
             
             for table in tables_with_file_id:
                 conn.execute(f"DELETE FROM {table} WHERE file_id = ?", (file_id,))
@@ -331,6 +374,9 @@ class EnhancedTechHTMLParserDatabase:
                 # Calculate techhtml_id for this element
                 techhtml_id = start_techhtml_id + i
                 
+                # Use sequential element_order to avoid unique constraint violations
+                element_order = i + 1
+                
                 conn.execute("""
                     INSERT INTO tech_html_elements 
                     (techhtml_id, file_id, element_order, inner_id_open_ttag, 
@@ -341,7 +387,7 @@ class EnhancedTechHTMLParserDatabase:
                 """, (
                     techhtml_id,
                     file_id,
-                    element.get('id', 0),
+                    element_order,  # Use sequential order instead of element.get('id', 0)
                     element.get('inner_id_open_ttag', 0),
                     element.get('inner_id_close_ttag', 0),
                     element.get('pos_open_ttag', 0),
@@ -526,8 +572,8 @@ class EnhancedTechHTMLParserDatabase:
             return cursor.fetchone()[0]
     
     def add_content_tech_html(self, file_id: int, techhtml_id_start: int, techhtml_id_end: int, 
-                             pos_start: int, pos_end: int, content_body: str) -> int:
-        """Add a new content_tech_html record."""
+                             pos_start: int, pos_end: int, content_body: str, type_content: str = 'element') -> int:
+        """Add a new content_tech_html record with new fields from id_part2."""
         content_id = self.get_next_content_id(file_id)
         
         with sqlite3.connect(self.db_path) as conn:
@@ -535,12 +581,34 @@ class EnhancedTechHTMLParserDatabase:
             cursor.execute("""
                 INSERT INTO content_tech_html 
                 (content_id, techhtml_id_start, techhtml_id_end, file_id, 
-                 pos_start, pos_end, content_body, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                 pos_start, pos_end, content_body, type_content, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (content_id, techhtml_id_start, techhtml_id_end, file_id,
-                  pos_start, pos_end, content_body, datetime.now()))
+                  pos_start, pos_end, content_body, type_content, datetime.now(), datetime.now()))
             conn.commit()
             return content_id
+    
+    def get_file_content(self, file_id: int) -> str:
+        """Get the original file content for a specific file_id."""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT stored_file_path FROM files WHERE id = ?
+            """, (file_id,))
+            result = cursor.fetchone()
+            
+            if not result or not result[0]:
+                print(f"❌ No stored file path found for file_id: {file_id}")
+                return ""
+            
+            stored_file_path = result[0]
+            
+            try:
+                with open(stored_file_path, 'r', encoding='utf-8') as f:
+                    return f.read()
+            except Exception as e:
+                print(f"❌ Error reading file {stored_file_path}: {e}")
+                return ""
     
     def get_tech_html_elements_by_file(self, file_id: int, limit: int = None) -> List[tuple]:
         """Get tech HTML elements for a specific file."""
@@ -559,12 +627,51 @@ class EnhancedTechHTMLParserDatabase:
             cursor.execute(query, (file_id,))
             return cursor.fetchall()
     
+
+    def filter_file_elements(self, somecontent, name_tech_tag: str) -> bool:
+        """Filter file content elements """        
+        if name_tech_tag == 'comment':
+            return False
+        if name_tech_tag == 'script':
+            return False
+        if name_tech_tag == 'style':
+            return False
+       # if some element body contains key word "href", "src", "alt", "rel" then return True            
+        if 'href' in somecontent.lower():
+            return True
+        if 'src' in somecontent.lower():
+            return True
+        if 'alt' in somecontent.lower():
+            return True
+        if 'rel' in somecontent.lower():
+            return True
+
+
+
+    def filter_file_between_elements(self, somecontent: str) -> bool:
+        """Filter file content between elements
+          if it after trim it is empty then return False
+          if it is empty then return False
+          if it is not attribute then return False
+        """
+
+        content = somecontent
+        if len(content.strip()) == 0:
+            return False
+        if content.startswith('\n'):
+            return False
+        if content.startswith('\t'):
+            return False
+        if content.startswith('\r'):
+            return False
+        return True
+
     def process_file_content(self, file_id: int, limit: int = 5) -> Dict[str, Any]:
-        """Process tech HTML elements for a file and create content records."""
+        """Process tech HTML elements for a file and create content records with improved extraction."""
         print(f"🔄 Processing content for file_id: {file_id}")
         
         # Get tech HTML elements
-        elements = self.get_tech_html_elements_by_file(file_id, limit)
+        elements = self.get_tech_html_elements_by_file(file_id, 0)
         
         if not elements:
             print(f"❌ No tech HTML elements found for file_id: {file_id}")
@@ -572,51 +679,88 @@ class EnhancedTechHTMLParserDatabase:
         
         print(f"📊 Found {len(elements)} elements to process")
         
-        created_records = []
+        # Get file content for extraction
+        f_content = self.get_file_content(file_id)
+        if not f_content:
+            print(f"❌ No file content found for file_id: {file_id}")
+            return {'processed': 0, 'created': 0}
         
-        # Process each element
+        print(f"📄 File content length: {len(f_content)} characters")
+        
+        created_records = []
+        prev_pos_close = 0
+        prev_techhtml_id = 0
+        
+        # Process each element with improved extraction
         for i, element in enumerate(elements):
             techhtml_id, pos_open, pos_close, file_id, type_ttag, name_tech_tag = element
+           
+           
+            # Extract content between previous element and current element
+            if pos_open > prev_pos_close:
+                content_body = f_content[prev_pos_close:pos_open]  # +1 to include pos_open
+
+                if self.filter_file_between_elements(content_body):
+                    content_id = self.add_content_tech_html(
+                        file_id=file_id,
+                        techhtml_id_start=prev_techhtml_id,
+                        techhtml_id_end=techhtml_id,
+                        pos_start=prev_pos_close,
+                        pos_end=pos_open,
+                        content_body=content_body,
+                        type_content='between_elements'
+                    )
+                    
+                    created_records.append({
+                        'content_id': content_id,
+                        'type': 'between_elements',
+                        'pos_start': prev_pos_close,
+                        'pos_end': pos_open,
+                        'content': content_body
+                    })
+                    
             
-            print(f"\n📝 Element {i+1}:")
-            print(f"   techhtml_id: {techhtml_id}")
-            print(f"   pos_open: {pos_open} -> pos_close: {pos_close}")
-            print(f"   type: {type_ttag}")
-            print(f"   name: {name_tech_tag}")
             
-            # Create content record
-            content_body = f"Content between positions {pos_open} and {pos_close} - {name_tech_tag}"
-            content_id = self.add_content_tech_html(
-                file_id=file_id,
-                techhtml_id_start=techhtml_id,
-                techhtml_id_end=techhtml_id,
-                pos_start=pos_open,
-                pos_end=pos_close,
-                content_body=content_body
-            )
+            # Extract the element content itself
+            element_content = f_content[pos_open:pos_close+1]  # +1 to include pos_close
+
+            if self.filter_file_elements(element_content, name_tech_tag):           
+                content_id = self.add_content_tech_html(
+                    file_id=file_id,
+                    techhtml_id_start=techhtml_id,
+                    techhtml_id_end=techhtml_id,
+                    pos_start=pos_open,
+                    pos_end=pos_close+1,
+                    content_body=element_content,
+                    type_content='element'
+                )
+                
+                created_records.append({
+                    'content_id': content_id,
+                    'type': 'element',
+                    'pos_start': pos_open,
+                    'pos_end': pos_close+1,
+                    'content': element_content
+                })
             
-            created_records.append({
-                'content_id': content_id,
-                'techhtml_id': techhtml_id,
-                'pos_start': pos_open,
-                'pos_end': pos_close,
-                'name': name_tech_tag
-            })
             
-            print(f"   ✅ Created content_id: {content_id}")
+            
+            # Update for next iteration
+            prev_pos_close = pos_close+1
+            prev_techhtml_id = techhtml_id
         
         print(f"\n🎉 Content processing complete for file_id: {file_id}")
         return {'processed': len(elements), 'created': len(created_records), 'records': created_records}
     
     def show_content_tech_html_records(self, file_id: int = None, limit: int = 10) -> None:
-        """Display content_tech_html records."""
+        """Display content_tech_html records with new fields from id_part2."""
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             
             if file_id:
                 cursor.execute("""
                     SELECT content_id, techhtml_id_start, techhtml_id_end, 
-                           file_id, pos_start, pos_end, content_body
+                           file_id, pos_start, pos_end, content_body, type_content, updated_at
                     FROM content_tech_html 
                     WHERE file_id = ?
                     ORDER BY content_id
@@ -625,7 +769,7 @@ class EnhancedTechHTMLParserDatabase:
             else:
                 cursor.execute("""
                     SELECT content_id, techhtml_id_start, techhtml_id_end, 
-                           file_id, pos_start, pos_end, content_body
+                           file_id, pos_start, pos_end, content_body, type_content, updated_at
                     FROM content_tech_html 
                     ORDER BY file_id, content_id
                     LIMIT ?
@@ -638,13 +782,168 @@ class EnhancedTechHTMLParserDatabase:
                 return
             
             print(f"\n📋 Content Tech HTML Records (showing {len(records)} records):")
-            print("-" * 80)
-            print(f"{'content_id':<10} {'techhtml_start':<15} {'techhtml_end':<15} {'file_id':<8} {'pos_start':<10} {'pos_end':<10} {'content_body':<30}")
+            print("-" * 100)
+            print(f"{'content_id':<10} {'techhtml_start':<15} {'techhtml_end':<15} {'file_id':<8} {'pos_start':<10} {'pos_end':<10} {'type_content':<12} {'content_body':<25}")
+            print("-" * 100)
+            
+            for record in records:
+                content_id, techhtml_start, techhtml_end, file_id, pos_start, pos_end, content_body, type_content, updated_at = record
+                print(f"{content_id:<10} {techhtml_start:<15} {techhtml_end:<15} {file_id:<8} {pos_start:<10} {pos_end:<10} {type_content:<12} {content_body[:25]:<25}")
+
+
+
+    def get_content_tech_html_by_file(self, file_id: int, limit: int = None) -> List[tuple]:
+        """Get content_tech_html records for a specific file."""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            query = """
+                SELECT content_id, content_body, type_content
+                FROM content_tech_html 
+                WHERE file_id = ?
+                ORDER BY content_id
+            """
+            if limit:
+                query += f" LIMIT {limit}"
+            
+            cursor.execute(query, (file_id,))
+            return cursor.fetchall()
+
+    def get_next_item_id(self, content_id: int) -> int:
+        """Get next item_id for specific content_id."""
+        with sqlite3.connect(self.db_path) as conn:
+            result = conn.execute("""
+                SELECT COALESCE(MAX(item_id), 0) + 1
+                FROM content_items_tech_html 
+                WHERE content_id = ?
+            """, (content_id,)).fetchone()
+            return result[0]
+    
+    def add_content_items_tech_html(self, content_id: int, item_body: str, 
+                                   type_content: str = 'img_src') -> int:
+        """Add content item to content_items_tech_html table."""
+        with sqlite3.connect(self.db_path) as conn:
+            # Get next item_id for this content_id
+            item_id = self.get_next_item_id(content_id)
+            
+            conn.execute("""
+                INSERT INTO content_items_tech_html 
+                (item_id, content_id, type_content, item_body, created_at, updated_at)
+                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            """, (item_id, content_id, type_content, item_body))
+            conn.commit()
+            return item_id
+    
+    def get_content_items_by_content_id(self, content_id: int, limit: int = None) -> List[tuple]:
+        """Get content_items_tech_html records for a specific content_id."""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            query = """
+                SELECT item_id, content_id, type_content, item_body, created_at, updated_at
+                FROM content_items_tech_html 
+                WHERE content_id = ?
+                ORDER BY item_id
+            """
+            if limit:
+                query += f" LIMIT {limit}"
+            
+            cursor.execute(query, (content_id,))
+            return cursor.fetchall()
+
+
+    
+    def process_file_content_items(self, file_id: int, limit: int = 5) -> Dict[str, Any]:
+        """Process content_tech_html records for a file and create content_items_tech_html records."""    
+        
+        # Get content_tech_html records
+        content_records = self.get_content_tech_html_by_file(file_id, 0)
+        
+        if not content_records:
+            print(f"❌ No content_tech_html records found for file_id: {file_id}")
+            return {'processed': 0, 'created': 0}
+    
+        print(f"📊 Found {len(content_records)} content_tech_html records to process")
+        
+        created_items = []
+        
+        # Process each content record
+        for i, content_record in enumerate(content_records):
+            content_id, content_body, type_content = content_record
+            
+            if type_content == 'between_elements':
+                # Create content_items_tech_html record
+                item_id = self.add_content_items_tech_html(
+                    content_id=content_id,
+                    item_body=content_body,
+                    type_content=type_content
+                )
+
+            if type_content == 'element':
+                # Create content_items_tech_html record using the content extractor
+                extracted_content = self.content_extractor.extract_content_from_element(content_body)
+                item_id = self.add_content_items_tech_html(
+                    content_id=content_id,
+                    item_body=content_body,
+                    type_content=extracted_content
+                )
+            created_items.append({
+                'item_id': item_id,
+                'content_id': content_id,
+                'type_content': type_content,
+                'item_body': content_body[:100] + '...' if len(content_body) > 100 else content_body
+            })
+            
+            if limit and i >= limit - 1:
+                break
+        
+        print(f"✅ Created {len(created_items)} content items")
+        
+        return {
+            'processed': len(content_records),
+            'created': len(created_items),
+            'items': created_items
+        }
+    
+    def show_content_items_records(self, content_id: int = None, limit: int = 10) -> None:
+        """Show content_items_tech_html records."""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            
+            if content_id:
+                query = """
+                    SELECT item_id, content_id, type_content, item_body, created_at
+                    FROM content_items_tech_html 
+                    WHERE content_id = ?
+                    ORDER BY item_id
+                    LIMIT ?
+                """
+                cursor.execute(query, (content_id, limit))
+            else:
+                query = """
+                    SELECT item_id, content_id, type_content, item_body, created_at
+                    FROM content_items_tech_html 
+                    ORDER BY content_id, item_id
+                    LIMIT ?
+                """
+                cursor.execute(query, (limit,))
+            
+            records = cursor.fetchall()
+            
+            if not records:
+                print("❌ No content_items_tech_html records found")
+                return
+            
+            print(f"\n📋 Content Items Records (showing {len(records)} records):")
             print("-" * 80)
             
             for record in records:
-                content_id, techhtml_start, techhtml_end, file_id, pos_start, pos_end, content_body = record
-                print(f"{content_id:<10} {techhtml_start:<15} {techhtml_end:<15} {file_id:<8} {pos_start:<10} {pos_end:<10} {content_body[:30]:<30}")
+                item_id, content_id, type_content, item_body, created_at = record
+                print(f"Item ID: {item_id}")
+                print(f"Content ID: {content_id}")
+                print(f"Type: {type_content}")
+                print(f"Body: {item_body[:100]}{'...' if len(item_body) > 100 else ''}")
+                print(f"Created: {created_at}")
+                print("-" * 40)
+
 
 def main():
     """Demonstrate enhanced database functionality."""
@@ -675,7 +974,8 @@ def main():
         
         # Process content for this file (inst_4.md implementation)
         print(f"\n🔄 Processing content for file_id: {file_id}")
-        content_result = db.process_file_content(file_id, limit=5)
+        # content_result = db.process_file_content(file_id, limit=5)
+        content_result = db.process_file_content(file_id)
         print(f"📊 Content processing result: {content_result}")
         
         # Show content records

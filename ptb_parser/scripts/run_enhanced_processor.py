@@ -5,10 +5,14 @@ Demonstrates the complete enhanced file processing strategy from inst_4.md
 """
 
 import sys
+import os
 from pathlib import Path
 
 # Add current directory to path to import from scripts
 sys.path.append(str(Path(__file__).parent))
+
+# Change to parent directory to access config and database files
+os.chdir(Path(__file__).parent.parent)
 
 from enhanced_file_processor import EnhancedFileProcessor
 

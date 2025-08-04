@@ -140,13 +140,34 @@ class EnhancedFileProcessor:
         
         # Process content extraction (id_part2 integration)
         print(f"   📄 Processing content extraction...")
-        content_result = self.db.process_file_content(file_id, limit=10)
+        content_result = self.db.process_file_content(file_id)
         print(f"   ✅ Content processing complete: {content_result['created']} records created")
         
         # Process content items (id_part2 implementation)
         print(f"   📦 Processing content items...")
-        content_items_result = self.db.process_file_content_items(file_id, limit=10)
+        content_items_result = self.db.process_file_content_items(file_id)
         print(f"   ✅ Content items processing complete: {content_items_result['created']} items created")
+
+        # Process content templates (id_part2 implementation)
+        print(f"   📄 Processing content templates...")
+        content_templates_result = self.db.process_file_content_templates(file_id)
+        print(f"   ✅ Content templates processing complete: {content_templates_result['updated']} templates updated")
+
+        self.db.output_content_tech_html_template_body(file_id)
+        print(f"   ✅ Content templates output complete")
+        
+        # Enhanced image extraction validation (id_part4 implementation)
+        print(f"   📸 Running enhanced image extraction validation...")
+        try:
+            validation_result = self.db.validate_and_report_image_extraction(file_id)
+            if validation_result['images_found'] > 0:
+                print(f"   ✅ Enhanced image extraction: {validation_result['images_found']} images found")
+                print(f"      ├─ Total attributes: {validation_result['total_attributes']}")
+                print(f"      └─ Average per image: {validation_result['total_attributes']/validation_result['images_found']:.2f}")
+            else:
+                print(f"   ℹ️  No images found in file")
+        except Exception as e:
+            print(f"   ⚠️  Image extraction validation error: {e}")
     
     def print_processing_summary(self, stats: Dict[str, Any]):
         """Print comprehensive processing summary."""
@@ -189,6 +210,19 @@ class EnhancedFileProcessor:
             print(f"   📄 Content: {content_result.get('created', 0)} records created")
             print(f"      ├─ Elements: {content_result.get('processed', 0)} processed")
             print(f"      └─ Records: {len(content_result.get('records', []))} total")
+        
+        # Add enhanced image extraction statistics
+        try:
+            img_stats = self.db.get_image_extraction_statistics(file_info['id'])
+            if img_stats['total_image_attributes'] > 0:
+                print(f"   📸 Enhanced Image Extraction:")
+                print(f"      ├─ Total attributes: {img_stats['total_image_attributes']}")
+                print(f"      ├─ Attribute types: {', '.join(img_stats['attribute_types'])}")
+                for attr_type, count in img_stats['image_attributes'].items():
+                    print(f"      │  {attr_type}: {count}")
+                print(f"      └─ Content items: {img_stats['total_content_items']}")
+        except Exception as e:
+            print(f"   📸 Image extraction stats: Not available ({e})")
     
     def process_all_files(self):
         """Process all files specified in configuration."""

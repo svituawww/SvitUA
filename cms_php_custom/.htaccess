@@ -1,0 +1,15 @@
+# Ultra-Simple Static HTML Router
+RewriteEngine On
+
+# Redirect .html URLs to clean URLs (e.g., /team.html -> /team)
+RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s([^.]+)\.html [NC]
+RewriteRule ^ %1 [R=301,L]
+
+# Allow direct access to uploads1 directory and its contents
+RewriteCond %{REQUEST_URI} ^/uploads1/.*$
+RewriteRule ^(.*)$ - [L]
+
+# Default routing for all other requests
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [L] 

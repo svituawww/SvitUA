@@ -1,0 +1,46 @@
+{
+  "inputhtmlfilename": "unknown",
+  "validation_timestamp": "2025-08-07T14:08:03.741866",
+  "overall_validation_status": "PASSED",
+  "overall_validation_score": 1.0,
+  "validation_summary": {
+    "total_validation_types": 3,
+    "passed_validations": 3,
+    "failed_validations": 0,
+    "validation_coverage": 1.0
+  },
+  "validation_details": {
+    "comment_validation": {
+      "total_comment_brackets": 52,
+      "comment_opening_brackets": 26,
+      "comment_closing_brackets": 26,
+      "valid_comment_pairs": 26,
+      "orphaned_comment_openings": [],
+      "orphaned_comment_closings": [],
+      "comment_consistency_score": 1.0,
+      "comment_validation_status": "PASSED"
+    },
+    "bracket_validation": {
+      "total_brackets": 466,
+      "opening_brackets": 233,
+      "closing_brackets": 233,
+      "valid_pairs": 233,
+      "orphaned_openings": [],
+      "orphaned_closings": [],
+      "bracket_consistency_score": 1.0,
+      "bracket_validation_status": "PASSED"
+    },
+    "element_sequence_validation": {
+      "total_elements": 222,
+      "validated_pairs": 221,
+      "sequence_errors": [],
+      "sequence_validation_status": "PASSED",
+      "sequence_consistency_score": 1.0
+    }
+  },
+  "cross_validation_analysis": {
+    "bracket_comment_correlation": 0.11158798283261803,
+    "element_bracket_alignment": 1.0495495495495495,
+    "overall_structure_integrity": 1.0
+  }
+}

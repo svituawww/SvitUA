@@ -1,0 +1,49 @@
+{
+  "input_files": ["input/index.html", "input/team.html"],
+  "output_database_tech_elements": "/Users/nirsixadmin/Desktop/SvitUA/ptb_parser/json_output/tech_tag_html_elements.json",
+  "output_database_byte": "/Users/nirsixadmin/Desktop/SvitUA/ptb_parser/json_output/all_openclose_bytes.json",
+  "output_database_unified_validation": "/Users/nirsixadmin/Desktop/SvitUA/ptb_parser/json_output/unified_validation.json",
+  "enable_bracket_collection": true,
+  "enable_tech_html_collection": true,
+  "enable_unified_validation": true,
+  "context_length_before_after_bracket": 5,
+  "unified_validation": {
+    "enabled": true,
+    "output_file": "/Users/nirsixadmin/Desktop/SvitUA/ptb_parser/json_output/unified_validation.json",
+    "include_cross_validation": true,
+    "validation_types": [
+      "comment_validation",
+      "bracket_validation", 
+      "element_sequence_validation"
+    ]
+  },
+  "tech_html_settings": {
+    "include_body_content": true,
+    "include_name_extraction": true,
+    "type_classification": true,
+    "standard_tags_list": [
+      "html", "head", "body", "title", "meta", "link", "script", "style",
+      "div", "span", "p", "h1", "h2", "h3", "h4", "h5", "h6",
+      "ul", "ol", "li", "a", "img", "br", "hr", "table", "tr", "td", "th",
+      "form", "input", "button", "textarea", "select", "option",
+      "nav", "header", "footer", "main", "section", "article", "aside",
+      "figure", "figcaption", "blockquote", "code", "pre", "em", "strong",
+      "b", "i", "u", "s", "mark", "small", "sub", "sup", "del", "ins",
+      "cite", "q", "abbr", "acronym", "address", "time", "data", "var",
+      "samp", "kbd", "output", "progress", "meter", "details", "summary",
+      "dialog", "menu", "menuitem", "command", "keygen", "canvas", "svg",
+      "path", "circle", "rect", "ellipse", "line", "polyline", "polygon",
+      "use", "area", "base", "col", "embed", "param", "source", "track", "wbr"
+    ],
+    "custom_tag_detection": true,
+    "comment_handling": true,
+    "doctype_handling": true,
+    "closing_tag_recognition": true
+  },
+  "processing_settings": {
+    "max_file_size_mb": 10,
+    "encoding": "utf-8",
+    "error_handling": "continue",
+    "verbose_output": true
+  }
+} 

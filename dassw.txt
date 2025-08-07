@@ -1,0 +1,47 @@
+Description:
+custom csm
+Database name:svitua_se_db_2
+Server:mysql334.loopia.se
+
+p/u
+cust@s379899
+hfrn9q64K2DBbuR
+
+
+
+
+
+
+$host = 's443.loopia.se';
+$user = 'wrpresss@s379409';       // Use full user ID from Loopia
+$password = '8bTyZcAMGA8Jm'; // Must match what's in Loopia
+$dbname = 'svitua_se_db_1';
+
+
+$link = mysqli_connect($host, $user, $password, $dbname);
+if (!$link) {
+    die('<br><br>Connection failed: ' . mysqli_connect_error());
+}
+echo '<br><br>Connected successfully!';
+
+
+
+
+----------------------------------------
+
+mamp
+GHtw6f2sDwe3
+SaltSooBoo2025
+
+
+Loopia.se
+--------------------------------
+Loopia.se
+svitua.se
+3CXJ5hT7WzHcAW
+--------------------------------
+ftpcluster.loopia.se:21
+ftp.svitua.se
+ivan2025
+MB!hXPEtZYD98Sg
+

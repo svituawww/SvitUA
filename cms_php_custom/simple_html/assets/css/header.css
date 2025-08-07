@@ -1,0 +1,109 @@
+ /* BEGIN only for header.css  */
+ * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background: linear-gradient(135deg, #0094e8 0%, #FFD700 100%);
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Header */
+header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    position: sticky;
+    top: 0;
+    z-index: 999;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+}
+
+nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.logo img {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 3px solid #0094e8;
+    box-shadow: 0 4px 15px rgba(0, 87, 184, 0.3);
+}
+
+.logo h1 {
+    font-size: 24px;
+    font-weight: bold;
+    color: #0094e8;
+}
+
+.nav-links {
+    display: flex;
+    list-style: none;
+    gap: 30px;
+    align-items: center;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: #333;
+    font-weight: 500;
+    transition: color 0.3s;
+}
+
+.nav-links a:hover {
+    color: #0094e8;
+}
+
+.language-switch {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.lang-btn {
+    padding: 8px 10px;
+    border: 1px solid #0094e8;
+    background: white;
+    color: #0094e8;
+    text-decoration: none;
+    border-radius: 20px;
+    font-size: 20px;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 45px;
+    height: 40px;
+}
+
+.lang-btn:hover {
+    background: #0094e8;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.lang-btn.active {
+    background: #0094e8;
+    color: white;
+}
+ /* END only for header.css  */

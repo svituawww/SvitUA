@@ -1,0 +1,61 @@
+# Deployment Configuration for Loopia.se Hosting
+
+
+environments:
+  development:
+    host: 'ftpcluster.loopia.se'
+    username: 'ivan2025'
+    password: 'MB!hXPEtZYD98Sg'
+    remote_path: '/test.svitua.se/public_html/'
+    protocol: 'ftp'
+    port: 21
+    timeout: 30
+    
+  staging:
+    host: 'ftpcluster.loopia.se'
+    username: 'ivan2025'
+    password: 'MB!hXPEtZYD98Sg'
+    remote_path: '/test.svitua.se/public_html/'
+    protocol: 'ftp'
+    port: 21
+    timeout: 30
+    
+  production:
+    host: 'ftpcluster.loopia.se'
+    username: 'ivan2025'
+    password: 'MB!hXPEtZYD98Sg'
+    remote_path: '/test.svitua.se/public_html/'
+    protocol: 'ftp'
+    port: 21
+    timeout: 30
+
+deployment:
+  backup_enabled: true
+  backup_path: '/backups/'
+  max_backups: 5
+  exclude_patterns:
+    - '*.log'
+    - '*.tmp'
+    - '.git/'
+    - 'node_modules/'
+    - '__pycache__/'
+    - '*.pyc'
+    - '.DS_Store'
+    - 'Thumbs.db'
+  
+  file_permissions:
+    directories: 755
+    files: 644
+    scripts: 755
+  
+  transfer:
+    parallel_uploads: 5
+    chunk_size: 8192
+    retry_attempts: 3
+    retry_delay: 5
+  
+  logging:
+    level: 'INFO'
+    file: 'logs/deployment.log'
+    max_size: '10MB'
+    backup_count: 5 

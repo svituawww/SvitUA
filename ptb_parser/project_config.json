@@ -8,6 +8,9 @@
   },
   "directories": {
     "full_root_path_project": "/Users/nirsixadmin/Desktop/SvitUA/ptb_parser",
+    "media_dir": "/Users/nirsixadmin/Desktop/SvitUA/svituawww.github.io/uploads1",
+    "config_dir": "config",
+    "json_output_dir": "json_output",
     "project_root_dir": ".",
     "script_dir": "scripts",
     "input_dir": "input",
@@ -36,13 +39,9 @@
     "compress_old_backups": true,
     "max_backup_age_days": 90
   },
-  "test_output_locations": {
-    "selenium_selective_files": "tests/output/selenium_selective_*.html",
-    "selenium_mapping_files": "tests/output/selenium_mapping_*.json",
-    "uuid_transformed_files": "tests/output/uuid_transformed_*.html",
-    "uuid_mapping_files": "tests/output/uuid_mapping_*.json"
-  },
   "production_output_locations": {
     "tech_test_files": "output/*_tech_test*.html"
-  }
+  },
+  "use_absolute_path_for_launching_scripts_from_from_any_dir_in_os": true,
+  "use_absolute_path_for_any_config_files_in_scripts": true  
 } 

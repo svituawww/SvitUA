@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Dict, List, Any
 
 class TechHTMLCollector:
-    def __init__(self, config_file: str = "json/tech_tag_config.json"):
+    def __init__(self, config_file: str = "/Users/nirsixadmin/Desktop/SvitUA/ptb_parser/config/tech_tag_config.json"):
         self.config_file = config_file
         self.config = self.load_config()
         
@@ -28,9 +28,10 @@ class TechHTMLCollector:
         """Get default configuration for TECH_HTML processing."""
         return {
             "input_files": ["input/index_html_.html"],
-            "output_database_tech_elements": "json/tech_tag_html_elements.json",
-            "output_database_byte": "json/all_openclose_bytes.json",
-            "output_database_comment_validation": "json/comment_validation.json",
+            "output_database_tech_elements": "/Users/nirsixadmin/Desktop/SvitUA/ptb_parser/json_output/tech_tag_html_elements.json",
+            "output_database_byte": "/Users/nirsixadmin/Desktop/SvitUA/ptb_parser/json_output/all_openclose_bytes.json",
+            "output_database_comment_validation": "/Users/nirsixadmin/Desktop/SvitUA/ptb_parser/json_output/comment_validation.json",
+            "output_database_unified_validation": "/Users/nirsixadmin/Desktop/SvitUA/ptb_parser/json_output/unified_validation.json",
             "enable_bracket_collection": True,
             "enable_tech_html_collection": True,
             "enable_comment_validation": True,
@@ -457,7 +458,7 @@ class TechHTMLCollector:
         )
         
         # Save unified validation report
-        output_path = self.config.get("output_database_unified_validation", "json/unified_validation.json")
+        output_path = self.config.get("output_database_unified_validation", "/Users/nirsixadmin/Desktop/SvitUA/ptb_parser/json_output/unified_validation.json")
         with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(unified_report, f, indent=2, ensure_ascii=False)
         
@@ -743,7 +744,7 @@ class TechHTMLCollector:
     
     def save_tech_html_results(self, results: List[Dict[str, Any]]):
         """Save TECH_HTML element results to JSON file."""
-        output_file = self.config.get("output_database_tech_elements", "json/tech_tag_html_elements.json")
+        output_file = self.config.get("output_database_tech_elements", "/Users/nirsixadmin/Desktop/SvitUA/ptb_parser/json_output/tech_tag_html_elements.json")
         output_path = Path(output_file)
         output_path.parent.mkdir(parents=True, exist_ok=True)
         
@@ -754,7 +755,7 @@ class TechHTMLCollector:
     
     def save_bracket_results(self, results: List[Dict[str, Any]]):
         """Save bracket collection results to JSON file."""
-        output_file = self.config.get("output_database_byte", "json/all_openclose_bytes.json")
+        output_file = self.config.get("output_database_byte", "/Users/nirsixadmin/Desktop/SvitUA/ptb_parser/json_output/all_openclose_bytes.json")
         output_path = Path(output_file)
         output_path.parent.mkdir(parents=True, exist_ok=True)
         
@@ -806,7 +807,7 @@ class TechHTMLCollector:
         
         print(f"📋 Configuration loaded from: {self.config_file}")
         print(f"📁 Input files: {len(self.config['input_files'])}")
-        print(f"💾 Output database: {self.config.get('output_database_byte', 'json/all_openclose_bytes.json')}")
+        print(f"💾 Output database: {self.config.get('output_database_byte', '/Users/nirsixadmin/Desktop/SvitUA/ptb_parser/json_output/all_openclose_bytes.json')}")
         
         # Collect brackets
         results = self.process_all_files_for_brackets()
@@ -835,7 +836,7 @@ class TechHTMLCollector:
         
         print(f"📋 Configuration loaded from: {self.config_file}")
         print(f"📁 Input files: {len(self.config['input_files'])}")
-        print(f"💾 Output database: {self.config.get('output_database_tech_elements', 'json/tech_tag_html_elements.json')}")
+        print(f"💾 Output database: {self.config.get('output_database_tech_elements', '/Users/nirsixadmin/Desktop/SvitUA/ptb_parser/json_output/tech_tag_html_elements.json')}")
         
         # Process TECH_HTML elements
         results = self.process_tech_html_elements()
@@ -873,7 +874,7 @@ class TechHTMLCollector:
         # Load configuration
         print(f"📋 Configuration loaded from: {self.config_file}")
         print(f"📁 Input files: {len(self.config['input_files'])}")
-        print(f"💾 Output databases: {self.config.get('output_database_tech_elements', 'json/tech_tag_html_elements.json')}")
+        print(f"💾 Output databases: {self.config.get('output_database_tech_elements', '/Users/nirsixadmin/Desktop/SvitUA/ptb_parser/json_output/tech_tag_html_elements.json')}")
         
         # Run bracket collection if enabled
         if self.config.get("enable_bracket_collection", False):
@@ -901,7 +902,7 @@ class TechHTMLCollector:
         
         try:
             # Load the TECH_HTML output database
-            output_file = self.config.get("output_database_tech_elements", "json/tech_tag_html_elements.json")
+            output_file = self.config.get("output_database_tech_elements", "/Users/nirsixadmin/Desktop/SvitUA/ptb_parser/json_output/tech_tag_html_elements.json")
             # print(f"📖 Loading TECH_HTML elements from: {output_file}")
             
             with open(output_file, 'r', encoding='utf-8') as f:

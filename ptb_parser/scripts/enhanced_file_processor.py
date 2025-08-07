@@ -24,7 +24,7 @@ from tech_tag_collector import TechHTMLCollector
 class EnhancedFileProcessor:
     """Enhanced file processor with complete integration of database and collector."""
     
-    def __init__(self, config_file: str = "json/tech_tag_config.json", 
+    def __init__(self, config_file: str = "/Users/nirsixadmin/Desktop/SvitUA/ptb_parser/config/tech_tag_config.json", 
                  db_path: str = "sqllite/tech_html_parser.db"):
         self.config_file = config_file
         self.config = self.load_config()

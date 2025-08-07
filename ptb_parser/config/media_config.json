@@ -1,0 +1,24 @@
+{
+  "input_dir_for_scanning": [
+    "/Users/nirsixadmin/Desktop/SvitUA/svituawww.github.io/uploads1"
+  ],
+  "output_dir_json": [
+    "/Users/nirsixadmin/Desktop/SvitUA/ptb_parser/json_output/media_info.json"
+  ],
+  "scan_options": {
+    "recursive": true,
+    "include_hidden": false,
+    "supported_formats": [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp"],
+    "max_file_size_mb": 50,
+    "generate_thumbnails": false,
+    "thumbnail_size": [150, 150],
+    "exclude_patterns": ["*thumb*", "*temp*", "*backup*"]
+  },
+  "output_options": {
+    "include_thumbnails": false,
+    "include_exif": true,
+    "include_file_stats": true,
+    "compress_json": false,
+    "pretty_print": true
+  }
+}

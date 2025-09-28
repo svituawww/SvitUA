@@ -1,0 +1,16 @@
+[
+  {
+    "backup_id": "2025-08-08_15-15-16_29af19d",
+    "timestamp": "2025-08-08T15:15:16.445128",
+    "commit_hash": "29af19d",
+    "commit_message": "Initial backup test",
+    "git_status": {
+      "is_repository": true,
+      "commit_hash": "29af19d",
+      "commit_message": "Last Update",
+      "branch": "master",
+      "has_changes": true
+    },
+    "backups": []
+  }
+]

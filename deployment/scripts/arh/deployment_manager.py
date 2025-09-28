@@ -20,38 +20,6 @@ import shutil
 import fnmatch
 
 
-class Logger:
-    """Enhanced logging system for deployment operations"""
-    
-    def __init__(self, log_file: str = 'logs/deployment.log'):
-        self.log_file = log_file
-        self.setup_logging()
-    
-    def setup_logging(self):
-        """Setup logging configuration"""
-        os.makedirs(os.path.dirname(self.log_file), exist_ok=True)
-        
-        logging.basicConfig(
-            level=logging.INFO,
-            format='%(asctime)s - %(levelname)s - %(message)s',
-            handlers=[
-                logging.FileHandler(self.log_file),
-                logging.StreamHandler()
-            ]
-        )
-        self.logger = logging.getLogger(__name__)
-    
-    def info(self, message: str):
-        self.logger.info(message)
-    
-    def error(self, message: str):
-        self.logger.error(message)
-    
-    def warning(self, message: str):
-        self.logger.warning(message)
-    
-    def debug(self, message: str):
-        self.logger.debug(message)
 
 
 class FileTransfer:
@@ -185,9 +153,14 @@ class FileTransfer:
             self.logger.error(f"File download failed for {remote_path}: {str(e)}")
             return False
 
-    def delete_file(self, remote_path: str) -> bool:
+    def delete_file(self, remote_path: str, environment: str = None) -> bool:
         """Delete a remote file"""
         try:
+            # Ensure connection is alive
+            if environment and not self._ensure_connection(environment):
+                self.logger.error(f"Failed to maintain connection for file deletion: {remote_path}")
+                return False
+            
             if self.connection:  # FTP
                 self.connection.delete(remote_path)
             elif self.sftp:  # SFTP
@@ -199,9 +172,10 @@ class FileTransfer:
             self.logger.error(f"File deletion failed for {remote_path}: {str(e)}")
             return False
     
-    def delete_directory(self, remote_path: str) -> bool:
-        """Delete a remote directory"""
+    def delete_directory(self, remote_path: str, environment: str = None) -> bool:
+        """Delete a remote directory (recursively if not empty)"""
         try:
+            # First, try to delete as empty directory
             if self.connection:  # FTP
                 self.connection.rmd(remote_path)
             elif self.sftp:  # SFTP
@@ -210,7 +184,90 @@ class FileTransfer:
             self.logger.info(f"Deleted directory: {remote_path}")
             return True
         except Exception as e:
-            self.logger.error(f"Directory deletion failed for {remote_path}: {str(e)}")
+            error_message = str(e)
+            # If directory is not empty, recursively delete contents
+            if "Directory not empty" in error_message or "550" in error_message:
+                self.logger.info(f"Directory {remote_path} is not empty, recursively deleting contents...")
+                return self._delete_directory_recursive(remote_path, environment=environment)
+            else:
+                self.logger.error(f"Directory deletion failed for {remote_path}: {error_message}")
+                return False
+    
+    def _delete_directory_recursive(self, remote_path: str, depth: int = 0, environment: str = None) -> bool:
+        """Recursively delete directory contents and then the directory itself"""
+        # Safety check to prevent infinite recursion
+        if depth > 50:  # Maximum recursion depth
+            self.logger.error(f"Maximum recursion depth reached for {remote_path}")
+            return False
+            
+        try:
+            # Ensure connection is alive
+            if environment and not self._ensure_connection(environment):
+                self.logger.error(f"Failed to maintain connection for {remote_path}")
+                return False
+            
+            # First check if directory exists by trying to list it
+            try:
+                if self.connection:  # FTP
+                    current_dir = self.connection.pwd()
+                    self.connection.cwd(remote_path)
+                    self.connection.cwd(current_dir)  # Go back
+                elif self.sftp:  # SFTP
+                    self.sftp.stat(remote_path)
+            except Exception as e:
+                # Directory doesn't exist, consider it already deleted
+                self.logger.info(f"Directory {remote_path} doesn't exist, skipping deletion")
+                return True
+            
+            # Get list of files and subdirectories
+            files = self.list_files(remote_path)
+            subdirs = self.list_directory(remote_path)
+            
+            self.logger.info(f"Found {len(files)} files and {len(subdirs)} subdirectories in {remote_path}")
+            
+            # Delete all files first
+            for file_path in files:
+                # Ensure connection before each file deletion
+                if environment and not self._ensure_connection(environment):
+                    self.logger.error(f"Failed to maintain connection while deleting file: {file_path}")
+                    return False
+                
+                if not self.delete_file(file_path):
+                    self.logger.error(f"Failed to delete file: {file_path}")
+                    return False
+            
+            # Recursively delete subdirectories (use _delete_directory_recursive to avoid infinite loop)
+            for subdir_path in subdirs:
+                # Ensure connection before each subdirectory deletion
+                if environment and not self._ensure_connection(environment):
+                    self.logger.error(f"Failed to maintain connection while deleting subdirectory: {subdir_path}")
+                    return False
+                
+                if not self._delete_directory_recursive(subdir_path, depth + 1, environment):
+                    self.logger.error(f"Failed to delete subdirectory: {subdir_path}")
+                    return False
+            
+            # Now try to delete the empty directory
+            try:
+                # Ensure connection before final directory deletion
+                if environment and not self._ensure_connection(environment):
+                    self.logger.error(f"Failed to maintain connection for final directory deletion: {remote_path}")
+                    return False
+                
+                if self.connection:  # FTP
+                    self.connection.rmd(remote_path)
+                elif self.sftp:  # SFTP
+                    self.sftp.rmdir(remote_path)
+                
+                self.logger.info(f"Recursively deleted directory: {remote_path}")
+                return True
+            except Exception as e:
+                # If directory still can't be deleted, it might not exist anymore
+                self.logger.info(f"Directory {remote_path} may already be deleted: {str(e)}")
+                return True
+            
+        except Exception as e:
+            self.logger.error(f"Recursive directory deletion failed for {remote_path}: {str(e)}")
             return False
     
     def disconnect(self):
@@ -224,6 +281,106 @@ class FileTransfer:
             self.logger.info("Connection closed")
         except Exception as e:
             self.logger.error(f"Error closing connection: {str(e)}")
+    
+    def _check_connection(self) -> bool:
+        """Check if connection is still alive and reconnect if needed"""
+        try:
+            if self.connection:  # FTP
+                # Try a simple command to test connection
+                self.connection.voidcmd("NOOP")
+                return True
+            elif self.sftp:  # SFTP
+                # Try to get current directory
+                self.sftp.getcwd()
+                return True
+        except Exception as e:
+            self.logger.warning(f"Connection check failed: {str(e)}")
+            return False
+        return False
+    
+    def _ensure_connection(self, environment: str) -> bool:
+        """Ensure connection is alive, reconnect if needed"""
+        if self._check_connection():
+            return True
+        
+        self.logger.info("Connection lost, attempting to reconnect...")
+        return self.connect(environment)
+    
+    def list_directory(self, remote_path: str) -> List[str]:
+        """List directories in remote path"""
+        try:
+            directories = []
+            if self.connection:  # FTP
+                current_dir = self.connection.pwd()
+                self.connection.cwd(remote_path)
+                file_list = self.connection.nlst()
+                self.connection.cwd(current_dir)
+                
+                for item in file_list:
+                    if item not in ['.', '..']:
+                        # Check if it's a directory by trying to change to it
+                        try:
+                            self.connection.cwd(os.path.join(remote_path, item))
+                            self.connection.cwd(remote_path)  # Go back
+                            directories.append(os.path.join(remote_path, item))
+                        except:
+                            # Not a directory, skip
+                            pass
+                            
+            elif self.sftp:  # SFTP
+                for item in self.sftp.listdir(remote_path):
+                    if item not in ['.', '..']:
+                        item_path = os.path.join(remote_path, item)
+                        try:
+                            stat = self.sftp.stat(item_path)
+                            if stat.st_mode & 0o40000:  # Check if it's a directory
+                                directories.append(item_path)
+                        except:
+                            pass
+            
+            self.logger.info(f"Listed {len(directories)} directories in {remote_path}")
+            return directories
+        except Exception as e:
+            self.logger.error(f"Directory listing failed for {remote_path}: {str(e)}")
+            return []
+    
+    def list_files(self, remote_path: str) -> List[str]:
+        """List files in remote path"""
+        try:
+            files = []
+            if self.connection:  # FTP
+                current_dir = self.connection.pwd()
+                self.connection.cwd(remote_path)
+                file_list = self.connection.nlst()
+                self.connection.cwd(current_dir)
+                
+                for item in file_list:
+                    if item not in ['.', '..']:
+                        # Check if it's a file by trying to change to it (should fail for files)
+                        try:
+                            self.connection.cwd(os.path.join(remote_path, item))
+                            self.connection.cwd(remote_path)  # Go back
+                            # If we get here, it's a directory, not a file
+                        except:
+                            # It's a file
+                            files.append(os.path.join(remote_path, item))
+                            
+            elif self.sftp:  # SFTP
+                for item in self.sftp.listdir(remote_path):
+                    if item not in ['.', '..']:
+                        item_path = os.path.join(remote_path, item)
+                        try:
+                            stat = self.sftp.stat(item_path)
+                            if not (stat.st_mode & 0o40000):  # Check if it's NOT a directory
+                                files.append(item_path)
+                        except:
+                            pass
+            
+            self.logger.info(f"Listed {len(files)} files in {remote_path}")
+            return files
+        except Exception as e:
+            self.logger.error(f"File listing failed for {remote_path}: {str(e)}")
+            return []
 
 
 class DeploymentManager:

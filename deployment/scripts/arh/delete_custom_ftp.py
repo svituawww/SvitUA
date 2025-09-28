@@ -41,7 +41,7 @@ def individual_delete_methods():
     ]   
 
     list_of_dirs_to_delete = [
-        "/test.svitua.se/logs"
+        "/test.svitua.se/public_html/json"
     ]
 
 
@@ -77,7 +77,7 @@ def individual_delete_methods():
 
 
         for file in list_of_files_to_delete:
-            if manager.transfer.delete_file(file):
+            if manager.transfer.delete_file(file, environment):
                 print(f"✓ {file} deleted successfully")
                 f_success_i += 1
             else:
@@ -85,7 +85,7 @@ def individual_delete_methods():
                 f_error_i += 1
 
         for dir in list_of_dirs_to_delete:
-            if manager.transfer.delete_directory(dir):
+            if manager.transfer.delete_directory(dir, environment):
                 print(f"✓ DIR {dir} deleted successfully")
                 d_success_i += 1
             else:
@@ -123,12 +123,56 @@ def individual_delete_methods():
         print(f"✗ Test failed with error: {str(e)}")
         return False
 
+def scan_dir_for_subdir_and_files(dir_to_scan):  
 
+    try:
+        # Initialize deployment manager
+        config_file = 'config/deployment_config.yaml'
+        manager = DeploymentManager(config_file)
+        
+        # Test with development environment
+        environment = 'development'
+        print(f"\n1. Connecting to {environment}...")
+        
+        if not manager.connect(environment):
+            print(f"✗ Failed to connect to {environment}")
+            return False
+
+        print(f"✓ Connected to {environment}")
+
+        # get list of subdirs and files in dir_to_scan
+        subdirs = manager.transfer.list_directory(dir_to_scan)
+        files = manager.transfer.list_files(dir_to_scan)
+
+        # save in dir_list.txt
+
+        # save in dir_list.txt
+        with open('dir_list.txt', 'w') as f:
+            for subdir in subdirs:
+                f.write(subdir + '\n')
+            for file in files:
+                f.write(file + '\n')
+
+        # disconnect
+        manager.transfer.disconnect()
+        print("✓ Connection closed")
+
+        return True
+
+    except Exception as e:
+        print(f"✗ Test failed with error: {str(e)}")
+        return False
+    
+    
+    
 
 
 def main():    
 
     print("    Individual Delete Methods")    
+
+    # first scan some dir for subdir and files in this dir in ftp and save in dir_list.txt
+    # scan_dir_for_subdir_and_files("/test.svitua.se/public_html")
     
     if individual_delete_methods():
         print("\n✓ Individual Delete Methods completed successfully")

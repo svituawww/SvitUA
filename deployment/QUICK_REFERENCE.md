@@ -132,6 +132,9 @@ python3 deploy.py --test
 # Dry run first
 python3 deploy.py --dry-run --environment production --source ../cms_php_custom/ --remote /public_html/
 
+
+python3 deploy.py --environment production --source ../cms_php_custom/ --remote /public_html/ --incremental
+
 # Check file paths
 # Verify file existence
 # Check permissions

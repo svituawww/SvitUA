@@ -19,19 +19,24 @@ from deployment_manager import DeploymentManager
 def individual_upload_methods():
 
     list_of_dirs_to_upload = [
-        # { "local_path": "/Users/nirsixadmin/Desktop/SvitUA/svituawww.github.io/uploads1",
-        #   "ftp_remote_path": "/test.svitua.se/public_html/uploads1"
-        # }
+        { "local_path": "/Users/nirsixadmin/Desktop/SvitUA/svituawww.github.io/uploads1",
+          "ftp_remote_path": "/test.svitua.se/public_html/uploads1"
+        }
     ]
 
     list_of_files_to_upload = [
-        { "local_path": "/Users/nirsixadmin/Desktop/SvitUA/cms_php_custom/.htaccess",
-          "ftp_remote_path": "/test.svitua.se/public_html/.htaccess"
-        }
+        # { "local_path": "/Users/nirsixadmin/Desktop/SvitUA/cms_php_custom/.htaccess",
+        #   "ftp_remote_path": "/test.svitua.se/public_html/.htaccess"
+        # }
         # ,
         # { "local_path": "/Users/nirsixadmin/Desktop/SvitUA/cms_php_custom/simple_html/pages/index.html",
         #   "ftp_remote_path": "/test.svitua.se/public_html/simple_html/pages/index.html"
         # }
+
+        { 
+            "local_path": "/Users/nirsixadmin/Desktop/SvitUA/svituawww.github.io/uploads1/2025/06/logo_120x120.png",
+            "ftp_remote_path": "/test.svitua.se/public_html/uploads1/2025/06/logo_120x120.png"
+        }
     ]
 
 
@@ -223,17 +228,17 @@ def main():
 
     print("    Individual Upload Methods")    
 
-    if individual_upload_methods():
-        print("\n✓ Individual Upload Methods completed successfully")
-    else:
-        print("\n✗ Individual Upload Methods failed")
-        return    
-
-    # if upload__uploads1___to_ftp():
-    #     print("\n✓ upload__uploads1___to_ftp completed successfully")
+    # if individual_upload_methods():
+    #     print("\n✓ Individual Upload Methods completed successfully")
     # else:
-    #     print("\n✗ upload__uploads1___to_ftp failed")
+    #     print("\n✗ Individual Upload Methods failed")
     #     return    
+
+    if upload__uploads1___to_ftp():
+        print("\n✓ upload__uploads1___to_ftp completed successfully")
+    else:
+        print("\n✗ upload__uploads1___to_ftp failed")
+        return    
 
 
 if __name__ == '__main__':

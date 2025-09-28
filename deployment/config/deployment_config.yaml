@@ -1,61 +1,118 @@
 # Deployment Configuration for Loopia.se Hosting
 
+constants:
+  local_base_path: '/Users/nirsixadmin/Desktop/SvitUA/'  
+  deployment_log_path: '/Users/nirsixadmin/Desktop/SvitUA/deployment/logs/deployment.log'
+  file_transfer_log_path: '/Users/nirsixadmin/Desktop/SvitUA/deployment/logs/file_transfer.log'
+  json_ftp_list: '/Users/nirsixadmin/Desktop/SvitUA/deployment/logs/ftp_list.json'
+  deployment_scripts_path: '/Users/nirsixadmin/Desktop/SvitUA/deployment/scripts/'
+  deployment_sqllite_path: '/Users/nirsixadmin/Desktop/SvitUA/deployment/sqllite/dp_db.db' 
+  des_scan_work: 'Scan work to analyze local files and develop upload list (output_json_ftp_list)'
+  des_upload_work: 'Upload files from local to the FTP server by input_json_ftp_list'
+  des_compare_work: 'Compare remote and local files to identify differences and develop upload list(output_json_ftp_list)  new/update files/dirs'
+  
 
-environments:
-  development:
-    host: 'ftpcluster.loopia.se'
-    username: 'ivan2025'
-    password: 'MB!hXPEtZYD98Sg'
-    remote_path: '/test.svitua.se/public_html/'
-    protocol: 'ftp'
-    port: 21
-    timeout: 30
-    
-  staging:
-    host: 'ftpcluster.loopia.se'
-    username: 'ivan2025'
-    password: 'MB!hXPEtZYD98Sg'
-    remote_path: '/test.svitua.se/public_html/'
-    protocol: 'ftp'
-    port: 21
-    timeout: 30
-    
-  production:
-    host: 'ftpcluster.loopia.se'
-    username: 'ivan2025'
-    password: 'MB!hXPEtZYD98Sg'
-    remote_path: '/test.svitua.se/public_html/'
-    protocol: 'ftp'
-    port: 21
-    timeout: 30
 
-deployment:
-  backup_enabled: true
-  backup_path: '/backups/'
-  max_backups: 5
-  exclude_patterns:
-    - '*.log'
-    - '*.tmp'
-    - '.git/'
-    - 'node_modules/'
-    - '__pycache__/'
-    - '*.pyc'
-    - '.DS_Store'
-    - 'Thumbs.db'
-  
-  file_permissions:
-    directories: 755
-    files: 644
-    scripts: 755
-  
-  transfer:
-    parallel_uploads: 5
-    chunk_size: 8192
-    retry_attempts: 3
-    retry_delay: 5
-  
-  logging:
-    level: 'INFO'
-    file: 'logs/deployment.log'
-    max_size: '10MB'
-    backup_count: 5 
+ftp_transfer_settings:
+  host: 'ftpcluster.loopia.se'
+  username: 'ivan2025'
+  password: 'MB!hXPEtZYD98Sg'  
+  protocol: 'ftp'
+  port: 21
+  timeout: 30
+
+
+
+# work configuration (Upload type)
+works:
+  upload_root:
+    id_work: "upload_root"
+    typeof_work: "upload"    
+    input_json_ftp_list: '/Users/nirsixadmin/Desktop/SvitUA/deployment/logs/del1_1.json'
+    # input_json_ftp_list: '/Users/nirsixadmin/Desktop/SvitUA/deployment/logs/cmp_media.json'
+    #input_json_ftp_list: '/Users/nirsixadmin/Desktop/SvitUA/deployment/logs/cmp_ftp_root.json'    
+
+  upload_somes1:
+    id_work: "upload_somes1"
+    typeof_work: "upload"    
+    input_json_ftp_list: '/Users/nirsixadmin/Desktop/SvitUA/deployment/logs/svit_ua/cmp_all.json'
+
+  upload_22somes22:
+    id_work: "upload_22somes22"
+    typeof_work: "upload"    
+    input_json_ftp_list: '/Users/nirsixadmin/Desktop/SvitUA/deployment/logs/upload_22somes22.json' 
+
+  upload_all:
+    id_work: "upload_all"
+    typeof_work: "upload"
+    input_json_ftp_list: '/Users/nirsixadmin/Desktop/SvitUA/deployment/logs/cmp_all.json'    
+    # id_subwork: "scan_aat1"          # References scan work for file analysis
+
+  # Subwork configuration (Scan type)
+  scan_aat1:
+    id_work: "scan_aat1"
+    typeof_work: "scan"    
+    source: "/Users/nirsixadmin/Desktop/SvitUA/aat1"
+    destination: "/test.svitua.se/public_html/aat1"
+    output_json_ftp_list: "/Users/nirsixadmin/Desktop/SvitUA/deployment/logs/ftp_list.json"
+    id_prev_snapshot_ref: 30
+    exclude_patterns:
+      - ".git/"
+      - "backups/**"
+      - "deployment/logs/**"
+      - "**/*.tmp"
+      - "**/*.log"
+      - "svitua_py_env/**"
+      - "node_modules/**"
+      - "__pycache__/"
+      - "*.pyc"
+      - ".DS_Store"
+      - "Thumbs.db"
+      - "ptb_parser/output/**"
+      - "svituawww.github.io/output/**"
+
+  compare_simple_html:
+    id_work: "compare_simple_html"
+    typeof_work: "compare"    
+    source: "/Users/nirsixadmin/Desktop/SvitUA/cms_php_custom/simple_html"
+    destination: "/test.svitua.se/public_html/simple_html"    
+    tmpsavedir: "/Users/nirsixadmin/Desktop/SvitUA/tmp/tmp2"
+    output_json_ftp_list: "/Users/nirsixadmin/Desktop/SvitUA/deployment/logs/cmp_simple_html.json"    
+    not_download_to_tmp: false
+    exclude_patterns:
+      - "**/*.tmp"
+      - "**/*.log"
+      - "*.pyc"
+      - ".DS_Store"
+      - "Thumbs.db"
+
+
+  compare_universe:
+    id_work: "compare_universe"
+    typeof_work: "compare"    
+    source: "/Users/nirsixadmin/Desktop/SvitUA/cms_php_custom"
+    destination: "/test.svitua.se/public_html"    
+    tmpsavedir: "/Users/nirsixadmin/Desktop/SvitUA/tmp/tmp2"
+    output_json_ftp_list: "/Users/nirsixadmin/Desktop/SvitUA/deployment/logs/cmp_all.json"    
+    not_download_to_tmp: true
+    exclude_patterns:
+      - "**/*.tmp"
+      - "**/*.log"
+      - "*.pyc"
+      - ".DS_Store"
+      - "Thumbs.db"  
+
+  compare_jpg_png:
+    id_work: "compare_jpg_png"
+    typeof_work: "compare"
+    source: "/Users/nirsixadmin/Desktop/SvitUA/svituawww.github.io/uploads1"
+    destination: "/test.svitua.se/public_html/uploads1"    
+    tmpsavedir: "/Users/nirsixadmin/Desktop/SvitUA/tmp/tmp2"
+    output_json_ftp_list: "/Users/nirsixadmin/Desktop/SvitUA/deployment/logs/cmp_uploads.json"    
+    not_download_to_tmp: true
+    exclude_patterns:
+      - "**/*.tmp"
+      - "**/*.log"
+      - "*.pyc"
+      - ".DS_Store"
+      - "Thumbs.db"
